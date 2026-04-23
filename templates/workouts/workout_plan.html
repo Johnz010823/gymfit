@@ -1,0 +1,363 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Workout Plan{% endblock %}
+
+{% block extra_css %}
+<style>
+  :root {
+    --gym-bg:      #0d0d0f;
+    --gym-card:    #16181c;
+    --gym-border:  #2a2d35;
+    --gym-accent:  #e8ff47;
+    --gym-text:    #e8eaf0;
+    --gym-muted:   #6b7280;
+    --gym-red:     #ff4757;
+    --gym-green:   #2ed573;
+    --gym-blue:    #1e90ff;
+    --gym-orange:  #ff6b35;
+  }
+
+  body { background: var(--gym-bg); color: var(--gym-text); font-family: 'Segoe UI', system-ui, sans-serif; }
+
+  /* ── Page Header ── */
+  .page-header {
+    background: linear-gradient(135deg, #1a1d23 0%, #0d0d0f 100%);
+    border-bottom: 1px solid var(--gym-border);
+    padding: 1.5rem 0;
+    margin-bottom: 2rem;
+  }
+  .page-header h1 { font-size: 1.8rem; font-weight: 800; letter-spacing: -0.5px; }
+  .page-header h1 span { color: var(--gym-accent); }
+
+  /* ── Action Buttons ── */
+  .btn-suggest {
+    background: var(--gym-accent);
+    color: #0d0d0f;
+    border: none;
+    font-weight: 700;
+    padding: .55rem 1.4rem;
+    border-radius: 8px;
+    transition: all .2s;
+    font-size: .9rem;
+  }
+  .btn-suggest:hover { background: #d4eb3a; color: #0d0d0f; transform: translateY(-1px); box-shadow: 0 4px 16px rgba(232,255,71,.3); }
+
+  /* ── Day Card ── */
+  .day-card {
+    background: var(--gym-card);
+    border: 1px solid var(--gym-border);
+    border-radius: 14px;
+    overflow: hidden;
+    transition: border-color .2s, box-shadow .2s;
+    height: 100%;
+  }
+  .day-card:hover { border-color: #3a3d45; box-shadow: 0 4px 24px rgba(0,0,0,.4); }
+  .day-card.today-card { border-color: var(--gym-accent); box-shadow: 0 0 0 1px var(--gym-accent); }
+  .day-card.rest-card  { border-color: #2a2d35; opacity: .75; }
+
+  .day-header {
+    padding: .85rem 1.1rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--gym-border);
+  }
+  .day-header .day-name { font-weight: 700; font-size: 1rem; }
+  .day-header .today-badge {
+    font-size: .68rem; font-weight: 700; letter-spacing: .5px;
+    background: var(--gym-accent); color: #0d0d0f;
+    padding: 2px 8px; border-radius: 20px; text-transform: uppercase;
+  }
+  .day-header .rest-badge {
+    font-size: .68rem; font-weight: 600;
+    background: #2a2d35; color: var(--gym-muted);
+    padding: 2px 8px; border-radius: 20px; text-transform: uppercase;
+  }
+  .muscle-group-tag {
+    font-size: .75rem; color: var(--gym-accent);
+    font-weight: 600; letter-spacing: .3px;
+  }
+
+  /* ── Exercise List ── */
+  .exercise-list { padding: .7rem 1.1rem; min-height: 80px; }
+  .exercise-item {
+    display: flex; align-items: center; gap: .6rem;
+    padding: .45rem 0;
+    border-bottom: 1px solid rgba(255,255,255,.04);
+    font-size: .875rem;
+  }
+  .exercise-item:last-child { border-bottom: none; }
+  .exercise-item .ex-check {
+    width: 20px; height: 20px; flex-shrink: 0;
+    border: 2px solid var(--gym-border); border-radius: 6px;
+    cursor: pointer; display: flex; align-items: center; justify-content: center;
+    transition: all .15s;
+  }
+  .exercise-item .ex-check.done { background: var(--gym-green); border-color: var(--gym-green); }
+  .exercise-item .ex-name { flex: 1; font-weight: 500; }
+  .exercise-item .ex-name.done { text-decoration: line-through; color: var(--gym-muted); }
+  .exercise-item .ex-meta { font-size: .75rem; color: var(--gym-muted); white-space: nowrap; }
+  .exercise-item .ex-actions { display: flex; gap: .25rem; opacity: 0; transition: opacity .15s; }
+  .exercise-item:hover .ex-actions { opacity: 1; }
+  .btn-ex { background: none; border: none; padding: 2px 5px; border-radius: 4px; cursor: pointer; font-size: .8rem; color: var(--gym-muted); transition: color .15s; }
+  .btn-ex:hover { color: var(--gym-text); }
+  .btn-ex.del:hover { color: var(--gym-red); }
+
+  .empty-day { padding: 1.2rem 1.1rem; text-align: center; color: var(--gym-muted); font-size: .85rem; }
+
+  /* ── Card Footer Actions ── */
+  .card-actions {
+    padding: .7rem 1.1rem;
+    border-top: 1px solid var(--gym-border);
+    display: flex; gap: .5rem; flex-wrap: wrap;
+  }
+  .btn-card-action {
+    font-size: .78rem; font-weight: 600; padding: .35rem .85rem;
+    border-radius: 6px; border: 1px solid var(--gym-border);
+    background: transparent; color: var(--gym-text); cursor: pointer;
+    transition: all .15s; text-decoration: none; display: inline-flex; align-items: center; gap: .3rem;
+  }
+  .btn-card-action:hover { background: #1e2128; color: var(--gym-text); border-color: #3a3d45; }
+  .btn-card-action.library { border-color: var(--gym-blue); color: var(--gym-blue); }
+  .btn-card-action.library:hover { background: rgba(30,144,255,.1); }
+  .btn-card-action.rest { border-color: var(--gym-muted); color: var(--gym-muted); }
+  .btn-card-action.rest:hover { border-color: var(--gym-red); color: var(--gym-red); background: rgba(255,71,87,.08); }
+  .btn-card-action.unrest { border-color: var(--gym-green); color: var(--gym-green); }
+  .btn-card-action.unrest:hover { background: rgba(46,213,115,.08); }
+
+  /* ── Progress Ring (per day) ── */
+  .progress-ring { width: 28px; height: 28px; flex-shrink: 0; }
+  circle { fill: none; stroke-width: 3; }
+  .ring-bg   { stroke: var(--gym-border); }
+  .ring-fill { stroke: var(--gym-green); stroke-linecap: round; transition: stroke-dashoffset .4s ease; }
+
+  /* ── Toast ── */
+  #toast-container { position: fixed; bottom: 1.5rem; right: 1.5rem; z-index: 9999; display: flex; flex-direction: column; gap: .5rem; }
+  .toast-msg {
+    background: #1e2128; border: 1px solid var(--gym-border); color: var(--gym-text);
+    padding: .7rem 1.1rem; border-radius: 10px; font-size: .875rem; font-weight: 500;
+    box-shadow: 0 4px 20px rgba(0,0,0,.5);
+    animation: slideIn .25s ease; max-width: 300px;
+  }
+  .toast-msg.success { border-left: 3px solid var(--gym-green); }
+  .toast-msg.error   { border-left: 3px solid var(--gym-red); }
+  @keyframes slideIn { from { transform: translateX(60px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+
+  /* ── Responsive ── */
+  @media (max-width: 576px) {
+    .day-grid .col { flex: 0 0 100%; max-width: 100%; }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="container">
+    <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+      <div>
+        <h1>🏋️ Workout <span>Plan</span></h1>
+        <p class="mb-0 text-muted" style="font-size:.875rem;">Today is <strong style="color:var(--gym-text)">{{ today_name }}</strong></p>
+      </div>
+      <div class="d-flex gap-2 flex-wrap">
+        <a href="{% url 'suggest_workout' %}" class="btn-suggest">
+          ⚡ Suggest Today's Workout
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="container pb-5">
+
+  {% if messages %}
+    {% for msg in messages %}
+      <div class="alert alert-{{ msg.tags|default:'info' }} alert-dismissible fade show mb-3" role="alert" style="background:#1e2128;border:1px solid var(--gym-border);color:var(--gym-text);">
+        {{ msg }}
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="alert"></button>
+      </div>
+    {% endfor %}
+  {% endif %}
+
+  <div class="row g-3 day-grid">
+    {% for day, wd in workout_days %}
+      <div class="col-sm-6 col-lg-4 col-xl-3">
+        <div class="day-card {% if day == today_name %}today-card{% endif %} {% if wd and wd.is_rest_day %}rest-card{% endif %}">
+
+          <!-- Header -->
+          <div class="day-header">
+            <div>
+              <div class="day-name">{{ day }}</div>
+              {% if wd and not wd.is_rest_day and wd.muscle_group %}
+                <div class="muscle-group-tag">{{ wd.muscle_group }}</div>
+              {% endif %}
+            </div>
+            <div class="d-flex align-items-center gap-2">
+              {% if day == today_name %}
+                <span class="today-badge">Today</span>
+              {% endif %}
+              {% if wd and wd.is_rest_day %}
+                <span class="rest-badge">Rest</span>
+              {% else %}
+                {% if wd %}
+                  {% with total=wd.exercises.count done=wd.exercises.filter.count %}
+                    <!-- Progress ring -->
+                    <svg class="progress-ring" viewBox="0 0 28 28">
+                      <circle class="ring-bg" cx="14" cy="14" r="11"/>
+                      {% with exercises=wd.exercises.all %}
+                        {% with total_count=exercises|length %}
+                          {% if total_count > 0 %}
+                            {% with done_count=0 %}
+                              {# We calculate in JS instead #}
+                            {% endwith %}
+                          {% endif %}
+                        {% endwith %}
+                      {% endwith %}
+                      <circle class="ring-fill" cx="14" cy="14" r="11"
+                        stroke-dasharray="69.1"
+                        stroke-dashoffset="69.1"
+                        data-day="{{ day }}"
+                        id="ring-{{ day|slugify }}"/>
+                    </svg>
+                  {% endwith %}
+                {% endif %}
+              {% endif %}
+            </div>
+          </div>
+
+          <!-- Exercise list -->
+          <div class="exercise-list" id="ex-list-{{ day|slugify }}">
+            {% if wd and wd.is_rest_day %}
+              <div class="empty-day">😴 Rest &amp; Recovery Day</div>
+            {% elif wd and wd.exercises.all %}
+              {% for ex in wd.exercises.all %}
+                <div class="exercise-item" id="ex-{{ ex.id }}">
+                  <div class="ex-check {% if ex.is_completed %}done{% endif %}"
+                       onclick="toggleExercise({{ ex.id }}, this)"
+                       title="Mark complete">
+                    {% if ex.is_completed %}✓{% endif %}
+                  </div>
+                  <div class="ex-name {% if ex.is_completed %}done{% endif %}">{{ ex.name }}</div>
+                  <div class="ex-meta">
+                    {{ ex.sets }}×{{ ex.reps }}{% if ex.weight_kg %} · {{ ex.weight_kg }}kg{% endif %}
+                  </div>
+                  <div class="ex-actions">
+                    <a href="{% url 'edit_exercise' ex.id %}" class="btn-ex" title="Edit">✏️</a>
+                    <form method="post" action="{% url 'delete_exercise' ex.id %}" style="margin:0;" onsubmit="return confirm('Remove {{ ex.name }}?')">
+                      {% csrf_token %}
+                      <button type="submit" class="btn-ex del" title="Delete">🗑</button>
+                    </form>
+                  </div>
+                </div>
+              {% endfor %}
+            {% else %}
+              <div class="empty-day">No exercises yet.<br><span style="font-size:.8rem;">Add from library or manually.</span></div>
+            {% endif %}
+          </div>
+
+          <!-- Footer actions -->
+          <div class="card-actions">
+            {% if not wd or not wd.is_rest_day %}
+              <!-- Library Button -->
+              <a href="{% url 'exercise_library' day %}" class="btn-card-action library">
+                📚 Library
+              </a>
+              <!-- Manual Add -->
+              <a href="{% url 'add_exercise' day %}" class="btn-card-action">
+                ＋ Manual
+              </a>
+            {% endif %}
+
+            <!-- Rest Day Toggle -->
+            <form method="post" action="{% url 'toggle_rest_day' day %}" style="margin:0;">
+              {% csrf_token %}
+              {% if wd and wd.is_rest_day %}
+                <button type="submit" class="btn-card-action unrest">✅ Train</button>
+              {% else %}
+                <button type="submit" class="btn-card-action rest">💤 Rest</button>
+              {% endif %}
+            </form>
+          </div>
+
+        </div>
+      </div>
+    {% endfor %}
+  </div><!-- /.row -->
+
+</div><!-- /.container -->
+
+<!-- Toast container -->
+<div id="toast-container"></div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const CSRF = '{{ csrf_token }}';
+
+// ── Toggle exercise completion ──────────────────────────────────────────────
+function toggleExercise(id, el) {
+  fetch(`/workout/toggle/${id}/`, {
+    method: 'POST',
+    headers: { 'X-CSRFToken': CSRF, 'Content-Type': 'application/json' }
+  })
+  .then(r => r.json())
+  .then(data => {
+    if (data.success) {
+      const item   = document.getElementById(`ex-${id}`);
+      const nameEl = item.querySelector('.ex-name');
+      if (data.completed) {
+        el.classList.add('done');
+        el.innerHTML = '✓';
+        nameEl.classList.add('done');
+        showToast('Exercise completed! 🎉', 'success');
+      } else {
+        el.classList.remove('done');
+        el.innerHTML = '';
+        nameEl.classList.remove('done');
+        showToast('Marked incomplete.', '');
+      }
+      updateRing(item);
+    }
+  });
+}
+
+// ── Update progress ring ────────────────────────────────────────────────────
+function updateRing(anyItemInDay) {
+  // Find the day card from any item inside it
+  const list = anyItemInDay.closest('.exercise-list');
+  if (!list) return;
+  const daySlug  = list.id.replace('ex-list-', '');
+  const ring     = document.getElementById(`ring-${daySlug}`);
+  if (!ring) return;
+  const items = list.querySelectorAll('.exercise-item');
+  const done  = list.querySelectorAll('.ex-check.done').length;
+  const total = items.length;
+  if (total === 0) return;
+  const circumference = 2 * Math.PI * 11; // r=11
+  const offset = circumference - (done / total) * circumference;
+  ring.style.strokeDasharray  = `${circumference}`;
+  ring.style.strokeDashoffset = `${offset}`;
+}
+
+// ── Toast ───────────────────────────────────────────────────────────────────
+function showToast(msg, type = 'success') {
+  const c   = document.getElementById('toast-container');
+  const div = document.createElement('div');
+  div.className = `toast-msg ${type}`;
+  div.textContent = msg;
+  c.appendChild(div);
+  setTimeout(() => div.remove(), 3200);
+}
+
+// ── Init rings on load ──────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  document.querySelectorAll('.exercise-list').forEach(list => {
+    const items = list.querySelectorAll('.exercise-item');
+    if (!items.length) return;
+    const anyItem = items[0];
+    updateRing(anyItem);
+  });
+});
+</script>
+{% endblock %}

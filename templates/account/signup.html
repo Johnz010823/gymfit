@@ -1,0 +1,186 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register - GymFit Pro</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: radial-gradient(circle at top, #1a1a1a, #0d0d0d);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+        }
+
+        /* ── CARD ── */
+        .auth-card {
+            width: 460px;
+            padding: 40px;
+            background: rgba(255, 255, 255, 0.06);
+            backdrop-filter: blur(15px);
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            text-align: center;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
+        }
+
+        /* ── BRAND ── */
+        .auth-brand {
+            font-size: 26px;
+            font-weight: 700;
+            color: #e63946;
+            font-family: 'Bebas Neue', sans-serif;
+            margin-bottom: 10px;
+        }
+
+        .auth-sub {
+            color: #aaa;
+            font-size: 14px;
+            margin-bottom: 25px;
+        }
+
+        /* ── DJANGO FORM OVERRIDES ── */
+        /* Wraps each field row rendered by {{ form.as_p }} */
+        .auth-card form p {
+            text-align: left;
+            margin-bottom: 14px;
+        }
+
+        .auth-card form p label {
+            display: block;
+            font-size: 12px;
+            color: #bbb;
+            margin-bottom: 5px;
+        }
+
+        .auth-card form p input,
+        .auth-card form p select,
+        .auth-card form p textarea {
+            width: 100%;
+            padding: 12px;
+            border-radius: 10px;
+            border: 1px solid #333;
+            background: #111;
+            color: white;
+            font-family: 'Inter', sans-serif;
+            font-size: 14px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .auth-card form p input:focus,
+        .auth-card form p select:focus,
+        .auth-card form p textarea:focus {
+            border-color: #e63946;
+        }
+
+        /* Django validation error list */
+        .auth-card form ul.errorlist {
+            list-style: none;
+            padding: 0;
+            margin: 4px 0 0;
+        }
+
+        .auth-card form ul.errorlist li {
+            font-size: 12px;
+            color: #ff4d6d;
+            background: rgba(255, 77, 109, 0.08);
+            border: 1px solid rgba(255, 77, 109, 0.25);
+            border-radius: 6px;
+            padding: 6px 10px;
+            margin-top: 4px;
+        }
+
+        /* Django helptext */
+        .auth-card form p span.helptext {
+            display: block;
+            font-size: 11px;
+            color: #666;
+            margin-top: 4px;
+        }
+
+        /* ── SUBMIT BUTTON ── */
+        .btn-register {
+            width: 100%;
+            padding: 13px;
+            background: linear-gradient(90deg, #e63946, #ff4d6d);
+            border: none;
+            border-radius: 10px;
+            color: white;
+            font-family: 'Inter', sans-serif;
+            font-size: 15px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: transform 0.3s;
+            margin-top: 5px;
+        }
+
+        .btn-register:hover {
+            transform: scale(1.03);
+        }
+
+        /* ── FOOTER LINK ── */
+        .login-link {
+            margin-top: 18px;
+            font-size: 13px;
+            color: #aaa;
+        }
+
+        .login-link a {
+            color: #e63946;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .login-link a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+
+<div class="auth-card">
+
+    <!-- Brand -->
+    <div class="auth-brand">
+        <i class="fas fa-dumbbell"></i> GymFit Pro
+    </div>
+
+    <h2>Create Account</h2>
+    <p class="auth-sub">Start your fitness journey today</p>
+
+    <!-- Registration Form -->
+    <form method="POST" action="">
+        {% csrf_token %}
+
+        {{ form.as_p }}
+
+        <button class="btn-register" type="submit">
+            <i class="fas fa-user-plus"></i> Register
+        </button>
+    </form>
+
+    <!-- Login Redirect -->
+    <div class="login-link">
+        Already have an account? <a href="{% url 'account_login' %}">Sign in</a>
+    </div>
+
+</div>
+
+</body>
+</html>

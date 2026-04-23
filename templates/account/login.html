@@ -1,0 +1,230 @@
+{% load static %}
+{% load socialaccount %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign In - GymFit Pro</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: 'Inter', sans-serif;
+            background: radial-gradient(circle at top, #1a1a1a, #0d0d0d);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+        }
+
+        /* ── CARD ── */
+        .auth-card {
+            width: 420px;
+            padding: 40px;
+            background: rgba(255, 255, 255, 0.06);
+            backdrop-filter: blur(15px);
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            text-align: center;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
+        }
+
+        /* ── BRAND ── */
+        .auth-brand {
+            font-size: 26px;
+            font-weight: 700;
+            color: #e63946;
+            font-family: 'Bebas Neue', sans-serif;
+            margin-bottom: 10px;
+        }
+
+        .auth-sub {
+            color: #aaa;
+            margin-bottom: 25px;
+        }
+
+        /* ── SOCIAL BUTTONS ── */
+        .btn-google,
+        .btn-owner {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            width: 100%;
+            padding: 12px;
+            border-radius: 10px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: transform 0.3s;
+            margin-bottom: 10px;
+        }
+
+        .btn-google {
+            background: white;
+            color: black;
+        }
+
+        .btn-owner {
+            background: #e63946;
+            color: white;
+        }
+
+        .btn-google:hover,
+        .btn-owner:hover {
+            transform: scale(1.03);
+        }
+
+        /* ── DIVIDER ── */
+        .divider {
+            margin: 20px 0;
+            font-size: 12px;
+            color: #888;
+        }
+
+        /* ── FORM ── */
+        .form-group {
+            text-align: left;
+            margin-bottom: 15px;
+        }
+
+        label {
+            font-size: 12px;
+            color: #bbb;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px;
+            margin-top: 5px;
+            border-radius: 10px;
+            border: 1px solid #333;
+            background: #111;
+            color: white;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        input:focus {
+            border-color: #e63946;
+        }
+
+        /* ── SUBMIT BUTTON ── */
+        .btn-login {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(90deg, #e63946, #ff4d6d);
+            border: none;
+            border-radius: 10px;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.3s;
+        }
+
+        .btn-login:hover {
+            transform: scale(1.03);
+        }
+
+        /* ── FOOTER LINKS ── */
+        .signup-link {
+            margin-top: 15px;
+            font-size: 13px;
+        }
+
+        .signup-link a {
+            color: #e63946;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .links {
+            margin-top: 15px;
+            display: flex;
+            justify-content: space-between;
+            font-size: 13px;
+        }
+
+        .links a {
+            color: #aaa;
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        .links a:hover {
+            color: white;
+        }
+    </style>
+</head>
+<body>
+
+<div class="auth-card">
+
+    <!-- Brand -->
+    <div class="auth-brand">
+        <i class="fas fa-dumbbell"></i> GymFit Pro
+    </div>
+
+    <h2>Welcome Back</h2>
+    <p class="auth-sub">Push harder than yesterday</p>
+
+    <!-- Google Login -->
+    <a href="{% provider_login_url 'google' process='login' %}" class="btn-google">
+        <img src="https://developers.google.com/identity/images/g-logo.png" width="20" alt="Google">
+        Continue with Google
+    </a>
+
+    <!-- Owner Login -->
+    <a href="{% url 'owner_login' %}" class="btn-owner">
+        <i class="fas fa-user-shield"></i>
+        Login as Owner
+    </a>
+
+    <div class="divider">— OR —</div>
+
+    <!-- Email / Password Form -->
+    <form method="POST" action="{% url 'account_login' %}">
+        {% csrf_token %}
+        <input type="hidden" name="next" value="{{ next }}">
+
+        <div class="form-group">
+            <label for="login">Email</label>
+            <input type="text" id="login" name="login" placeholder="Enter email" required>
+        </div>
+
+        <div class="form-group">
+            <label for="password">Password</label>
+            <input type="password" id="password" name="password" placeholder="Enter password" required>
+        </div>
+
+        <button class="btn-login" type="submit">
+            <i class="fas fa-sign-in-alt"></i> Sign In
+        </button>
+    </form>
+
+    <!-- Register -->
+    <div class="signup-link">
+        Don't have an account? <a href="{% url 'account_signup' %}">Register now</a>
+    </div>
+
+    <!-- Extra Links -->
+    <div class="links">
+        <a href="{% url 'face_login' %}">
+            <i class="fas fa-camera"></i> Face Login
+        </a>
+        <a href="{% url 'home' %}">Home</a>
+    </div>
+
+</div>
+
+</body>
+</html>

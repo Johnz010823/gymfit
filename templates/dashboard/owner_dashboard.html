@@ -1,0 +1,191 @@
+{% extends 'base.html' %}
+{% block title %}Owner Dashboard - GymFit Pro{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-title">Owner Dashboard</h1>
+    <span class="page-subtitle">Gym management overview</span>
+</div>
+
+<!-- Stats Row -->
+<div class="stats-grid">
+    <div class="stat-card stat-blue">
+        <div class="stat-icon"><i class="fas fa-users"></i></div>
+        <div class="stat-info">
+            <span class="stat-value">{{ total_members }}</span>
+            <span class="stat-label">Total Members</span>
+        </div>
+    </div>
+    <div class="stat-card stat-green">
+        <div class="stat-icon"><i class="fas fa-running"></i></div>
+        <div class="stat-info">
+            <span class="stat-value">{{ present_today }}</span>
+            <span class="stat-label">Present Today</span>
+        </div>
+    </div>
+    <div class="stat-card stat-success">
+        <div class="stat-icon"><i class="fas fa-check-circle"></i></div>
+        <div class="stat-info">
+            <span class="stat-value">{{ paid_members }}</span>
+            <span class="stat-label">Paid Members</span>
+        </div>
+    </div>
+    <div class="stat-card stat-danger">
+        <div class="stat-icon"><i class="fas fa-exclamation-triangle"></i></div>
+        <div class="stat-info">
+            <span class="stat-value">{{ expired_count }}</span>
+            <span class="stat-label">Expired Plans</span>
+        </div>
+    </div>
+</div>
+
+<div class="dashboard-grid">
+    <!-- Attendance Trend Chart -->
+    <div class="dash-card dash-card-wide">
+        <div class="dash-card-header">
+            <h3><i class="fas fa-chart-line"></i> 7-Day Attendance Trend</h3>
+            <a href="{% url 'owner_attendance' %}" class="btn-link">View All</a>
+        </div>
+        <canvas id="trendChart" height="120"></canvas>
+    </div>
+
+    <!-- Members List -->
+    <div class="dash-card dash-card-wide">
+        <div class="dash-card-header">
+            <h3><i class="fas fa-users"></i> Members</h3>
+        </div>
+        <div class="table-responsive">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Name</th><th>Email</th><th>Membership</th>
+                        <th>Face ID</th><th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for member in members %}
+                    <tr>
+                        <td>
+                            <div class="member-name">
+                                <div class="member-avatar">{{ member.user.first_name.0|upper|default:member.user.username.0|upper }}</div>
+                                {{ member.full_name }}
+                            </div>
+                        </td>
+                        <td>{{ member.user.email }}</td>
+                        <td>
+                            <span class="badge-status badge-{{ member.membership_status }}">
+                                {{ member.get_membership_status_display }}
+                            </span>
+                        </td>
+                        <td>
+                            {% if member.face_registered %}
+                            <span class="badge-status badge-active"><i class="fas fa-check"></i> Yes</span>
+                            {% else %}
+                            <span class="badge-status badge-expired"><i class="fas fa-times"></i> No</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <a href="{% url 'member_detail' member.user.id %}" class="btn-table">
+                                <i class="fas fa-eye"></i>
+                            </a>
+                            <a href="{% url 'update_payment' member.user.id %}" class="btn-table btn-table-pay">
+                                <i class="fas fa-credit-card"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="5" class="text-center">No members yet.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Recent Attendance -->
+    <div class="dash-card">
+        <div class="dash-card-header">
+            <h3><i class="fas fa-calendar-check"></i> Today's Attendance</h3>
+        </div>
+        <div class="table-responsive">
+            <table class="data-table">
+                <thead>
+                    <tr><th>Member</th><th>Time In</th><th>Method</th></tr>
+                </thead>
+                <tbody>
+                    {% for att in recent_attendance %}
+                    <tr>
+                        <td>{{ att.user.get_full_name|default:att.user.username }}</td>
+                        <td>{{ att.time_in|time:"h:i A" }}</td>
+                        <td><span class="badge-method">{{ att.get_login_method_display }}</span></td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="3" class="text-center">No check-ins yet today.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Payment Status -->
+    <div class="dash-card">
+        <div class="dash-card-header">
+            <h3><i class="fas fa-credit-card"></i> Payment Status</h3>
+        </div>
+        <div class="table-responsive">
+            <table class="data-table">
+                <thead>
+                    <tr><th>Member</th><th>Plan</th><th>Status</th><th>Expiry</th></tr>
+                </thead>
+                <tbody>
+                    {% for pay in payments %}
+                    <tr>
+                        <td>{{ pay.user.get_full_name|default:pay.user.username }}</td>
+                        <td>{{ pay.get_plan_display }}</td>
+                        <td><span class="badge-status badge-{{ pay.status }}">{{ pay.get_status_display }}</span></td>
+                        <td>
+                            {% if pay.expiry_date %}
+                                {% if pay.is_expired %}
+                                <span class="text-danger">{{ pay.expiry_date|date:"M d, Y" }}</span>
+                                {% else %}
+                                {{ pay.expiry_date|date:"M d, Y" }}
+                                {% endif %}
+                            {% else %}&mdash;{% endif %}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="4" class="text-center">No payments recorded.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const trend = {{ trend_data|safe }};
+new Chart(document.getElementById('trendChart').getContext('2d'), {
+    type: 'line',
+    data: {
+        labels: trend.map(d => d.date),
+        datasets: [{
+            label: 'Members Present',
+            data: trend.map(d => d.count),
+            borderColor: '#e63946',
+            backgroundColor: 'rgba(230,57,70,0.1)',
+            tension: 0.4, fill: true, pointRadius: 5,
+            pointBackgroundColor: '#e63946'
+        }]
+    },
+    options: {
+        responsive: true,
+        scales: {
+            y: { beginAtZero: true, ticks: { stepSize: 1, color: '#aaa' }, grid: { color: '#2d2d2d' } },
+            x: { ticks: { color: '#aaa' }, grid: { display: false } }
+        },
+        plugins: { legend: { display: false } }
+    }
+});
+</script>
+{% endblock %}
