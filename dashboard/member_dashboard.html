@@ -1,0 +1,231 @@
+{% extends 'base.html' %}
+{% block title %}Dashboard - GymFit Pro{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-title">My Dashboard</h1>
+    <span class="page-subtitle">{{ day_name }}, ready to crush it?</span>
+</div>
+<h3>📢 Announcements</h3>
+
+{% for ann in announcements %}
+
+<div class="card mb-3 border-{{ ann.priority }}">
+
+    <div class="card-body">
+
+        <h5>
+            {{ ann.title }}
+        </h5>
+
+        <p>
+            {{ ann.body }}
+        </p>
+
+        <small>
+            {{ ann.get_priority_display }}
+            • {{ ann.created_at|date:"M d, Y" }}
+        </small>
+
+    </div>
+
+</div>
+
+{% empty %}
+
+<p>No announcements available.</p>
+
+{% endfor %}
+<!-- Stats Cards -->
+<div class="stats-grid">
+    <div class="stat-card stat-blue">
+        <div class="stat-icon"><i class="fas fa-calendar-check"></i></div>
+        <div class="stat-info">
+            <span class="stat-value">{{ month_attendance }}</span>
+            <span class="stat-label">Sessions This Month</span>
+        </div>
+    </div>
+    <div class="stat-card stat-green">
+        <div class="stat-icon"><i class="fas fa-fire"></i></div>
+        <div class="stat-info">
+            <span class="stat-value">{{ weekly_logs }}</span>
+            <span class="stat-label">Exercises This Week</span>
+        </div>
+    </div>
+    <div class="stat-card {% if today_attendance %}stat-success{% else %}stat-warning{% endif %}">
+        <div class="stat-icon"><i class="fas fa-door-open"></i></div>
+        <div class="stat-info">
+            <span class="stat-value">{% if today_attendance %}IN{% else %}OUT{% endif %}</span>
+            <span class="stat-label">Today's Status</span>
+        </div>
+    </div>
+    <div class="stat-card {% if latest_payment and latest_payment.status == 'paid' %}stat-success{% else %}stat-danger{% endif %}">
+        <div class="stat-icon"><i class="fas fa-credit-card"></i></div>
+        <div class="stat-info">
+            <span class="stat-value">{% if latest_payment %}{{ latest_payment.get_status_display }}{% else %}No Plan{% endif %}</span>
+            <span class="stat-label">Membership</span>
+        </div>
+    </div>
+</div>
+
+<div class="dashboard-grid">
+    <!-- Today's Workout -->
+    <div class="dash-card">
+        <div class="dash-card-header">
+            <h3><i class="fas fa-dumbbell"></i> Today's Workout — {{ day_name }}</h3>
+            <a href="{% url 'workout_plan' %}" class="btn-link">View Full Plan</a>
+        </div>
+        {% if today_workout %}
+            {% if today_workout.is_rest_day %}
+            <div class="rest-day">
+                <i class="fas fa-bed"></i>
+                <p>Rest Day — Recovery is part of training!</p>
+            </div>
+            {% else %}
+            <div class="muscle-badge">{{ today_workout.muscle_group }}</div>
+            <div class="exercise-list">
+                {% for ex in today_exercises %}
+                <div class="exercise-item {% if ex.is_completed %}completed{% endif %}" id="ex-{{ ex.id }}">
+                    <div class="exercise-info">
+                        <span class="ex-name">{{ ex.name }}</span>
+                        <span class="ex-detail">{{ ex.sets }} sets × {{ ex.reps }} reps{% if ex.weight_kg %} @ {{ ex.weight_kg }}kg{% endif %}</span>
+                    </div>
+                    <button class="ex-check {% if ex.is_completed %}checked{% endif %}" onclick="toggleExercise({{ ex.id }}, this)">
+                        <i class="fas {% if ex.is_completed %}fa-check-circle{% else %}fa-circle{% endif %}"></i>
+                    </button>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+        {% else %}
+        <div class="no-workout">
+            <i class="fas fa-plus-circle"></i>
+            <p>No workout plan set for today.</p>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Attendance Chart -->
+    <div class="dash-card">
+        <div class="dash-card-header">
+            <h3><i class="fas fa-chart-bar"></i> 7-Day Attendance</h3>
+        </div>
+        <canvas id="attendanceChart" height="200"></canvas>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="dash-card">
+        <div class="dash-card-header">
+            <h3><i class="fas fa-bolt"></i> Quick Actions</h3>
+        </div>
+        <div class="quick-actions">
+            {% if not user.profile.face_registered %}
+            <a href="{% url 'face_register' %}" class="action-btn action-primary">
+                <i class="fas fa-camera"></i> Register Face
+            </a>
+            {% endif %}
+            {% if today_attendance and not today_attendance.time_out %}
+            <a href="{% url 'mark_checkout' %}" class="action-btn action-warning">
+                <i class="fas fa-sign-out-alt"></i> Check Out
+            </a>
+            {% endif %}
+            <a href="{% url 'attendance' %}" class="action-btn action-secondary">
+                <i class="fas fa-history"></i> Attendance Log
+            </a>
+            <a href="{% url 'workout_plan' %}" class="action-btn action-secondary">
+                <i class="fas fa-dumbbell"></i> Full Workout
+            </a>
+        </div>
+    </div>
+
+    <!-- Recent Attendance -->
+    <div class="dash-card">
+        <div class="dash-card-header">
+            <h3><i class="fas fa-history"></i> Recent Sessions</h3>
+        </div>
+        <div class="attendance-table-wrapper">
+            <table class="data-table">
+                <thead>
+                    <tr><th>Date</th><th>Time In</th><th>Method</th></tr>
+                </thead>
+                <tbody>
+                    {% for att in recent_attendance %}
+                    <tr>
+                        <td>{{ att.date|date:"M d" }}</td>
+                        <td>{{ att.time_in|time:"h:i A" }}</td>
+                        <td><span class="badge-method">{{ att.get_login_method_display }}</span></td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="3" class="text-center">No attendance records yet.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Payment Alert -->
+{% if latest_payment and latest_payment.is_expired %}
+<div class="alert-banner alert-danger-banner">
+    <i class="fas fa-exclamation-triangle"></i>
+    Your membership has expired! Please contact the gym owner to renew.
+</div>
+{% elif not latest_payment %}
+<div class="alert-banner alert-warning-banner">
+    <i class="fas fa-info-circle"></i>
+    No active membership found. Please contact the gym owner.
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const chartData = {{ chart_data|safe }};
+const ctx = document.getElementById('attendanceChart').getContext('2d');
+new Chart(ctx, {
+    type: 'bar',
+    data: {
+        labels: chartData.map(d => d.date),
+        datasets: [{
+            label: 'Attended',
+            data: chartData.map(d => d.present),
+            backgroundColor: chartData.map(d => d.present ? '#e63946' : '#2d2d2d'),
+            borderRadius: 6,
+        }]
+    },
+    options: {
+        responsive: true,
+        scales: {
+            y: { display: false, max: 1.5 },
+            x: { grid: { display: false }, ticks: { color: '#aaa' } }
+        },
+        plugins: { legend: { display: false } }
+    }
+});
+
+function toggleExercise(id, btn) {
+    fetch(`/workouts/toggle/${id}/`, {
+        method: 'POST',
+        headers: { 'X-CSRFToken': getCookie('csrftoken') }
+    })
+    .then(r => r.json())
+    .then(data => {
+        const item = document.getElementById(`ex-${id}`);
+        if (data.completed) {
+            item.classList.add('completed');
+            btn.innerHTML = '<i class="fas fa-check-circle"></i>';
+            btn.classList.add('checked');
+        } else {
+            item.classList.remove('completed');
+            btn.innerHTML = '<i class="fas fa-circle"></i>';
+            btn.classList.remove('checked');
+        }
+    });
+}
+
+function getCookie(name) {
+    let v = document.cookie.match('(^|;) ?' + name + '=([^;]*)(;|$)');
+    return v ? v[2] : null;
+}
+</script>
+{% endblock %}

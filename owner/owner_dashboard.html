@@ -1,0 +1,1000 @@
+{% extends 'base.html' %}
+{% block title %}Owner Dashboard — GymFit Pro{% endblock %}
+
+{% block content %}
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&display=swap" rel="stylesheet">
+
+<style>
+/* ================================================================
+   GYMFIT PRO — OWNER DASHBOARD
+   Scoped to .gp — zero conflicts with base/main styles
+   ================================================================ */
+
+/* ── TOKENS ─────────────────────────────────────────────────────── */
+.gp {
+  --dr:      #ff3347;
+  --drdk:    #cc2236;
+  --drlo:    rgba(255,51,71,.08);
+  --drmid:   rgba(255,51,71,.16);
+  --drglow:  rgba(255,51,71,.32);
+  --dg:      #00e5a0;
+  --dglo:    rgba(0,229,160,.08);
+  --dy:      #ffcc44;
+  --dylo:    rgba(255,204,68,.08);
+  --db:      #38bdf8;
+  --dblo:    rgba(56,189,248,.08);
+
+  --i0: #ffffff;
+  --i1: #d0d2dc;
+  --i2: #8b8ea0;
+  --i3: #4a4c60;
+  --i4: #2e3045;
+
+  --s0: #07090f;
+  --s1: #0c0e17;
+  --s2: #11131e;
+  --s3: #181b28;
+  --s4: #1f2233;
+  --s5: #272a3d;
+
+  --bd:   rgba(255,255,255,.055);
+  --bdhi: rgba(255,255,255,.11);
+
+  --fh: 'Syne', sans-serif;
+  --fb: 'DM Sans', sans-serif;
+
+  --rad-sm:  8px;
+  --rad-md:  12px;
+  --rad-lg:  18px;
+  --rad-xl:  24px;
+
+  --trans: all .22s cubic-bezier(.4,0,.2,1);
+
+  font-family: var(--fb);
+  background: var(--s0);
+  color: var(--i1);
+  padding: 36px 40px 80px;
+  margin: -1.5rem;
+  min-height: 100vh;
+  position: relative;
+  overflow-x: hidden;
+  box-sizing: border-box;
+}
+
+/* ── AMBIENT ATMOSPHERE ─────────────────────────────────────────── */
+.gp::before {
+  content: '';
+  position: fixed;
+  top: -280px; left: -80px;
+  width: 700px; height: 700px;
+  background: radial-gradient(circle, rgba(255,51,71,.04) 0%, transparent 60%);
+  pointer-events: none; z-index: 0;
+}
+.gp::after {
+  content: '';
+  position: fixed;
+  bottom: -200px; right: -100px;
+  width: 500px; height: 500px;
+  background: radial-gradient(circle, rgba(56,189,248,.03) 0%, transparent 60%);
+  pointer-events: none; z-index: 0;
+}
+.gp-grid-bg {
+  position: fixed; inset: 0; z-index: 0; pointer-events: none;
+  background-image:
+    linear-gradient(rgba(255,255,255,.018) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,.018) 1px, transparent 1px);
+  background-size: 40px 40px;
+}
+.gp > *:not(.gp-grid-bg) { position: relative; z-index: 1; }
+
+/* ── TOPBAR ─────────────────────────────────────────────────────── */
+.gp .tb {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  margin-bottom: 36px;
+  padding-bottom: 28px;
+  border-bottom: 1px solid var(--bd);
+  flex-wrap: wrap;
+  gap: 20px;
+  animation: gp-up .5s ease both;
+}
+.gp .tb-eyebrow {
+  display: flex; align-items: center; gap: 8px;
+  font-family: var(--fh);
+  font-size: 10px; font-weight: 700;
+  letter-spacing: .3em; text-transform: uppercase;
+  color: var(--dr); margin-bottom: 6px;
+}
+.gp .tb-eyebrow-dot {
+  width: 5px; height: 5px; border-radius: 50%;
+  background: var(--dr); opacity: .7;
+  box-shadow: 0 0 6px var(--dr);
+}
+.gp .tb-title {
+  font-family: var(--fh);
+  font-size: 32px; font-weight: 800;
+  color: var(--i0); letter-spacing: -.6px; line-height: 1; margin: 0;
+  background: linear-gradient(135deg, #fff 50%, rgba(255,255,255,.6));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.gp .tb-sub {
+  font-size: 12.5px; color: var(--i3);
+  margin-top: 6px; font-weight: 400; letter-spacing: .01em;
+}
+.gp .tb-right { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+
+.gp .gp-live {
+  display: inline-flex; align-items: center; gap: 7px;
+  padding: 8px 16px;
+  background: var(--s3); border: 1px solid var(--bd);
+  border-radius: 100px; font-size: 12px; font-weight: 500; color: var(--i2);
+  letter-spacing: .02em;
+}
+.gp .gp-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--dg); box-shadow: 0 0 8px var(--dg);
+  animation: gp-pulse 2.2s ease-in-out infinite; flex-shrink: 0;
+}
+@keyframes gp-pulse { 0%,100%{opacity:1;} 50%{opacity:.25;} }
+
+.gp .btn-ghost {
+  display: inline-flex; align-items: center; gap: 7px;
+  padding: 9px 18px;
+  background: var(--s3);
+  border: 1px solid var(--bdhi); border-radius: var(--rad-sm);
+  font-family: var(--fb); font-size: 13px; font-weight: 500;
+  color: var(--i2); text-decoration: none;
+  transition: var(--trans);
+}
+.gp .btn-ghost:hover {
+  border-color: rgba(255,255,255,.22); color: var(--i0);
+  background: var(--s4); transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(0,0,0,.3);
+}
+.gp .btn-red {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 9px 20px;
+  background: linear-gradient(135deg, #ff3347 0%, #ff5567 100%);
+  border: none; border-radius: var(--rad-sm);
+  font-family: var(--fb); font-size: 13px; font-weight: 600;
+  color: #fff; text-decoration: none;
+  box-shadow: 0 0 24px var(--drglow), 0 4px 14px rgba(0,0,0,.35);
+  transition: var(--trans);
+}
+.gp .btn-red:hover {
+  background: linear-gradient(135deg, #e02d40, #ff3347);
+  transform: translateY(-2px);
+  color: #fff;
+  box-shadow: 0 0 36px var(--drglow), 0 10px 28px rgba(0,0,0,.45);
+}
+
+/* ── KPI ROW ─────────────────────────────────────────────────────── */
+.gp .kpi-row {
+  display: grid; grid-template-columns: repeat(4, 1fr);
+  gap: 14px; margin-bottom: 14px;
+  animation: gp-up .5s .07s ease both;
+}
+.gp .kpi {
+  background: linear-gradient(160deg, var(--s2), var(--s1));
+  border: 1px solid var(--bd);
+  border-radius: var(--rad-lg); padding: 24px 22px 22px;
+  position: relative; overflow: hidden;
+  transition: var(--trans);
+  cursor: default;
+}
+.gp .kpi::before {
+  content:''; position:absolute;
+  top:0; left:0; right:0; height:1px;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,.08), transparent);
+}
+.gp .kpi::after {
+  content:''; position:absolute;
+  top:0; left:24px; right:24px; height:2px;
+  border-radius: 0 0 4px 4px;
+  opacity: 0; transition: opacity .3s;
+}
+.gp .kpi:hover { transform: translateY(-5px); box-shadow: 0 20px 50px rgba(0,0,0,.5); }
+.gp .kpi:hover::after { opacity: 1; }
+
+.gp .kpi.kr { border-color: rgba(255,51,71,.18); }
+.gp .kpi.kr::after { background: var(--dr); box-shadow: 0 0 12px var(--dr); }
+.gp .kpi.kr:hover { border-color: rgba(255,51,71,.35); }
+
+.gp .kpi.kg { border-color: rgba(0,229,160,.18); }
+.gp .kpi.kg::after { background: var(--dg); box-shadow: 0 0 12px var(--dg); }
+.gp .kpi.kg:hover { border-color: rgba(0,229,160,.35); }
+
+.gp .kpi.ky { border-color: rgba(255,204,68,.18); }
+.gp .kpi.ky::after { background: var(--dy); box-shadow: 0 0 12px var(--dy); }
+.gp .kpi.ky:hover { border-color: rgba(255,204,68,.35); }
+
+.gp .kpi.kb { border-color: rgba(56,189,248,.18); }
+.gp .kpi.kb::after { background: var(--db); box-shadow: 0 0 12px var(--db); }
+.gp .kpi.kb:hover { border-color: rgba(56,189,248,.35); }
+
+.gp .kpi-ico {
+  width: 40px; height: 40px; border-radius: var(--rad-sm);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px; margin-bottom: 20px;
+  transition: var(--trans);
+}
+.gp .kpi:hover .kpi-ico { transform: scale(1.08); }
+.gp .kr .kpi-ico { background: var(--drlo); color: var(--dr); }
+.gp .kg .kpi-ico { background: var(--dglo); color: var(--dg); }
+.gp .ky .kpi-ico { background: var(--dylo); color: var(--dy); }
+.gp .kb .kpi-ico { background: var(--dblo); color: var(--db); }
+
+.gp .kpi-num {
+  font-family: var(--fh); font-size: 44px; font-weight: 800;
+  color: var(--i0); line-height: .9; letter-spacing: -2px;
+  transition: var(--trans);
+}
+.gp .kpi-lbl {
+  font-size: 11.5px; color: var(--i3); margin-top: 9px;
+  letter-spacing: .02em; font-weight: 400;
+}
+
+/* ── CHIP STRIP ──────────────────────────────────────────────────── */
+.gp .chip-row {
+  display: grid; grid-template-columns: repeat(3, 1fr);
+  gap: 10px; margin-bottom: 36px;
+  animation: gp-up .5s .12s ease both;
+}
+.gp .gp-chip {
+  display: flex; align-items: center; gap: 14px;
+  padding: 14px 18px;
+  border-radius: var(--rad-md); border: 1px solid;
+  background: linear-gradient(160deg, var(--s2), var(--s1));
+  transition: var(--trans);
+}
+.gp .gp-chip:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,.3); }
+
+.gp .gp-chip.cy { border-color: rgba(255,204,68,.2); }
+.gp .gp-chip.cy:hover { border-color: rgba(255,204,68,.38); }
+.gp .gp-chip.cr { border-color: rgba(255,51,71,.2); }
+.gp .gp-chip.cr:hover { border-color: rgba(255,51,71,.38); }
+.gp .gp-chip.cn { border-color: var(--bd); }
+.gp .gp-chip.cn:hover { border-color: var(--bdhi); }
+
+.gp .chip-ico {
+  width: 36px; height: 36px; border-radius: var(--rad-sm);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px; flex-shrink: 0;
+}
+.gp .cy .chip-ico { background: var(--dylo); color: var(--dy); }
+.gp .cr .chip-ico { background: var(--drlo); color: var(--dr); }
+.gp .cn .chip-ico { background: var(--s4);   color: var(--i3); }
+
+.gp .chip-val {
+  font-family: var(--fh); font-size: 24px; font-weight: 700; line-height: 1;
+}
+.gp .cy .chip-val { color: var(--dy); }
+.gp .cr .chip-val { color: var(--dr); }
+.gp .cn .chip-val { color: var(--i1); }
+.gp .chip-lbl { font-size: 11px; color: var(--i3); margin-top: 3px; }
+
+/* ── MAIN GRID ───────────────────────────────────────────────────── */
+.gp .mg {
+  display: flex; flex-direction: column;
+  gap: 18px;
+  animation: gp-up .5s .17s ease both;
+}
+.gp .mg-l { display: flex; flex-direction: column; gap: 18px; }
+
+/* Bottom row: check-ins + announcements side by side */
+.gp .mg-b {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 18px; align-items: start;
+}
+@media (max-width: 860px) {
+  .gp .mg-b { grid-template-columns: 1fr; }
+}
+
+/* ── CARD ────────────────────────────────────────────────────────── */
+.gp .card {
+  background: linear-gradient(160deg, var(--s2), var(--s1));
+  border: 1px solid var(--bd);
+  border-radius: var(--rad-xl); overflow: hidden;
+  transition: var(--trans);
+  position: relative;
+}
+.gp .card::before {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0; height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,.07), transparent);
+  pointer-events: none;
+}
+.gp .card-head {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 18px 24px 16px;
+  border-bottom: 1px solid var(--bd);
+}
+.gp .card-title {
+  font-family: var(--fh); font-size: 14px; font-weight: 700;
+  color: var(--i0); letter-spacing: .025em;
+  display: flex; align-items: center; gap: 10px;
+}
+.gp .ct-ico {
+  width: 30px; height: 30px;
+  background: var(--drlo); border-radius: var(--rad-sm);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px; color: var(--dr); flex-shrink: 0;
+}
+.gp .card-lnk {
+  font-size: 12px; color: var(--i3); text-decoration: none;
+  transition: color .2s;
+  display: inline-flex; align-items: center; gap: 5px;
+}
+.gp .card-lnk:hover { color: var(--dr); }
+
+/* ── CHART ───────────────────────────────────────────────────────── */
+.gp .chart-body { padding: 24px; }
+
+/* ── TABLE ───────────────────────────────────────────────────────── */
+.gp .t-wrap { overflow-x: auto; }
+.gp table.gt {
+  width: 100%; border-collapse: collapse;
+  font-size: 13px; font-family: var(--fb);
+}
+.gp table.gt thead th {
+  padding: 10px 18px; text-align: left;
+  font-size: 10px; font-weight: 600;
+  letter-spacing: .14em; text-transform: uppercase;
+  color: var(--i3); border-bottom: 1px solid var(--bd);
+  white-space: nowrap; background: var(--s2);
+}
+.gp table.gt tbody tr {
+  border-bottom: 1px solid rgba(255,255,255,.022);
+  transition: var(--trans);
+}
+.gp table.gt tbody tr:last-child { border-bottom: none; }
+.gp table.gt tbody tr:hover { background: rgba(255,255,255,.025); }
+.gp table.gt td { padding: 12px 18px; vertical-align: middle; color: var(--i1); }
+.gp table.gt .empty td {
+  padding: 48px 18px; text-align: center; color: var(--i3); font-size: 13px;
+}
+
+/* ── MEMBER CELL ─────────────────────────────────────────────────── */
+.gp .mcell { display: flex; align-items: center; gap: 11px; }
+.gp .mav {
+  width: 34px; height: 34px; border-radius: var(--rad-sm);
+  background: linear-gradient(135deg, #ff3347 0%, #ff7b86 100%);
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--fh); font-size: 13px; font-weight: 700;
+  color: #fff; flex-shrink: 0;
+  box-shadow: 0 0 14px rgba(255,51,71,.25);
+}
+.gp .mn { font-weight: 500; font-size: 13px; color: var(--i0); }
+.gp .me { font-size: 11px; color: var(--i3); margin-top: 1px; }
+
+/* ── PILLS ───────────────────────────────────────────────────────── */
+.gp .pill {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 4px 11px; border-radius: 100px;
+  font-size: 11px; font-weight: 600;
+  letter-spacing: .02em; white-space: nowrap;
+}
+.gp .pill.active  { background: var(--dglo); color: var(--dg); border: 1px solid rgba(0,229,160,.2); }
+.gp .pill.paid    { background: var(--dglo); color: var(--dg); border: 1px solid rgba(0,229,160,.2); }
+.gp .pill.pending { background: var(--dylo); color: var(--dy); border: 1px solid rgba(255,204,68,.2); }
+.gp .pill.unpaid  { background: var(--dylo); color: var(--dy); border: 1px solid rgba(255,204,68,.2); }
+.gp .pill.expired { background: var(--drlo); color: var(--dr); border: 1px solid rgba(255,51,71,.2); }
+.gp .pill.inactive{ background: var(--drlo); color: var(--dr); border: 1px solid rgba(255,51,71,.2); }
+.gp .pill.neutral { background: var(--s4); color: var(--i3); border: 1px solid var(--bd); }
+
+/* ── ACTION BUTTONS ──────────────────────────────────────────────── */
+.gp .ta { display: flex; gap: 5px; }
+.gp .ta-btn {
+  width: 30px; height: 30px; border-radius: var(--rad-sm);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px; text-decoration: none;
+  color: var(--i3); background: var(--s4); border: 1px solid var(--bd);
+  transition: var(--trans);
+}
+.gp .ta-btn:hover {
+  background: var(--drlo); color: var(--dr);
+  border-color: rgba(255,51,71,.28);
+  transform: scale(1.1);
+}
+.gp .ta-btn.pay:hover {
+  background: var(--dglo); color: var(--dg);
+  border-color: rgba(0,229,160,.28);
+}
+
+/* ── TEXT HELPERS ────────────────────────────────────────────────── */
+.gp .amt {
+  font-family: var(--fh); font-size: 14px; font-weight: 700;
+  color: var(--dg); letter-spacing: .4px;
+}
+.gp .face-y { color: var(--dg); font-size: 15px; }
+.gp .face-n { color: var(--i4); font-size: 15px; }
+.gp .tx-r   { color: var(--dr); font-size: 12px; }
+.gp .tx-d   { font-size: 12.5px; color: var(--i2); }
+.gp .tx-dash { color: var(--i4); }
+
+/* ── TODAY'S CHECK-INS ───────────────────────────────────────────── */
+.gp .att-list {
+  display: flex; flex-direction: column;
+  padding: 8px 16px 14px; gap: 2px;
+  max-height: 380px; overflow-y: auto;
+}
+.gp .att-row {
+  display: flex; align-items: center;
+  justify-content: space-between;
+  padding: 10px 10px; border-radius: var(--rad-md);
+  transition: var(--trans); gap: 8px;
+}
+.gp .att-row:hover { background: rgba(255,255,255,.03); }
+.gp .att-n { font-size: 13px; font-weight: 500; color: var(--i1); }
+.gp .att-t { font-size: 11px; color: var(--i3); margin-top: 1px; font-variant-numeric: tabular-nums; }
+.gp .method {
+  font-size: 10px; font-weight: 600; letter-spacing: .09em; text-transform: uppercase;
+  padding: 3px 9px; border-radius: 4px;
+  background: var(--dblo); color: var(--db);
+  border: 1px solid rgba(56,189,248,.15); white-space: nowrap; flex-shrink: 0;
+}
+.gp .att-empty {
+  text-align: center; padding: 44px 16px;
+  color: var(--i3); font-size: 13px;
+}
+.gp .att-empty i { display: block; font-size: 30px; margin-bottom: 14px; opacity: .2; }
+
+/* ── ANNOUNCEMENTS ───────────────────────────────────────────────── */
+.gp .ann-list {
+  padding: 10px 16px 14px;
+  display: flex; flex-direction: column; gap: 8px;
+}
+.gp .ann {
+  padding: 15px 16px;
+  border-radius: var(--rad-md);
+  background: var(--s3); border: 1px solid var(--bd);
+  border-left: 3px solid;
+  transition: var(--trans);
+}
+.gp .ann:hover {
+  border-color: var(--bdhi);
+  border-left-color: inherit;
+  transform: translateX(2px);
+}
+.gp .ann.pr-high   { border-left-color: var(--dr); }
+.gp .ann.pr-normal { border-left-color: var(--dy); }
+.gp .ann.pr-low    { border-left-color: var(--i4); }
+
+.gp .ann-top {
+  display: flex; justify-content: space-between;
+  align-items: flex-start; gap: 10px; margin-bottom: 6px;
+}
+.gp .ann-title { font-weight: 600; font-size: 13px; color: var(--i0); line-height: 1.35; }
+.gp .ann-body  { font-size: 12px; color: var(--i3); line-height: 1.6; }
+.gp .ann-meta  { font-size: 11px; color: var(--i4); margin-top: 9px; }
+.gp .ann-acts  { display: flex; gap: 5px; flex-shrink: 0; }
+.gp .ann-btn {
+  padding: 4px 11px; border-radius: 5px; font-size: 11px; font-weight: 600;
+  cursor: pointer; border: none; text-decoration: none;
+  transition: opacity .18s, transform .18s;
+  display: inline-flex; align-items: center; gap: 4px;
+  font-family: var(--fb);
+}
+.gp .ab-e { background: var(--dylo); color: var(--dy); }
+.gp .ab-d { background: var(--drlo); color: var(--dr); }
+.gp .ann-btn:hover { opacity: .75; transform: scale(.96); }
+.gp .ann-empty {
+  text-align: center; padding: 36px 20px;
+  color: var(--i3); font-size: 13px;
+}
+.gp .ann-empty i { display: block; font-size: 26px; margin-bottom: 12px; opacity: .2; }
+
+/* ── SECTION DIVIDER ─────────────────────────────────────────────── */
+.gp .sec-divider {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--bd), transparent);
+  margin: 4px 0;
+}
+
+/* ── ANIMATIONS ──────────────────────────────────────────────────── */
+@keyframes gp-up {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── SCROLLBAR ───────────────────────────────────────────────────── */
+.gp ::-webkit-scrollbar { width: 4px; height: 4px; }
+.gp ::-webkit-scrollbar-track { background: transparent; }
+.gp ::-webkit-scrollbar-thumb {
+  background: linear-gradient(var(--s5), var(--s4));
+  border-radius: 4px;
+}
+
+/* ── RESPONSIVE ──────────────────────────────────────────────────── */
+@media (max-width: 1280px) {
+  .gp .kpi-row { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 1100px) {
+  .gp .chip-row { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 768px) {
+  .gp { padding: 20px 18px 60px; }
+  .gp .kpi-row { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+  .gp .chip-row { grid-template-columns: 1fr; }
+  .gp .tb { flex-direction: column; align-items: flex-start; }
+  .gp .tb-title { font-size: 26px; }
+  .gp .kpi-num { font-size: 36px; }
+}
+@media (max-width: 480px) {
+  .gp .kpi-row { grid-template-columns: 1fr; }
+  .gp .btn-ghost span { display: none; }
+}
+</style>
+
+<div class="gp">
+  <div class="gp-grid-bg"></div>
+
+  <!-- ── TOPBAR ─────────────────────────────────────────────────── -->
+  <div class="tb">
+    <div>
+      <div class="tb-eyebrow">
+        <span class="tb-eyebrow-dot"></span>
+        GymFit Pro
+      </div>
+      <h1 class="tb-title">Owner Dashboard</h1>
+      <p class="tb-sub">{{ today|date:"l, F j, Y" }}</p>
+    </div>
+    <div class="tb-right">
+      <div class="gp-live">
+        <span class="gp-dot"></span>
+        Live
+      </div>
+      <a href="{% url 'owner_attendance' %}" class="btn-ghost">
+        <i class="fas fa-calendar-check"></i>
+        <span>Attendance</span>
+      </a>
+      <a href="{% url 'owner_create_announcement' %}" class="btn-red">
+        <i class="fas fa-bullhorn"></i>
+        New Announcement
+      </a>
+    </div>
+  </div>
+
+  <!-- ── KPI STRIP ──────────────────────────────────────────────── -->
+  <div class="kpi-row">
+    <div class="kpi kb">
+      <div class="kpi-ico"><i class="fas fa-users"></i></div>
+      <div class="kpi-num">{{ total_members }}</div>
+      <div class="kpi-lbl">Total Members</div>
+    </div>
+    <div class="kpi kg">
+      <div class="kpi-ico"><i class="fas fa-door-open"></i></div>
+      <div class="kpi-num">{{ present_today }}</div>
+      <div class="kpi-lbl">Present Today</div>
+    </div>
+    <div class="kpi kr">
+      <div class="kpi-ico"><i class="fas fa-circle-check"></i></div>
+      <div class="kpi-num">{{ paid_members }}</div>
+      <div class="kpi-lbl">Paid Members</div>
+    </div>
+    <div class="kpi ky">
+      <div class="kpi-ico"><i class="fas fa-triangle-exclamation"></i></div>
+      <div class="kpi-num">{{ expired_count }}</div>
+      <div class="kpi-lbl">Expired Plans</div>
+    </div>
+  </div>
+
+  <!-- ── CHIP STRIP ─────────────────────────────────────────────── -->
+  <div class="chip-row">
+    <div class="gp-chip cy">
+      <div class="chip-ico"><i class="fas fa-clock"></i></div>
+      <div>
+        <div class="chip-val">{{ expiring_soon }}</div>
+        <div class="chip-lbl">Expiring in 7 days</div>
+      </div>
+    </div>
+    <div class="gp-chip cr">
+      <div class="chip-ico"><i class="fas fa-receipt"></i></div>
+      <div>
+        <div class="chip-val">{{ pending_payments }}</div>
+        <div class="chip-lbl">Pending payments</div>
+      </div>
+    </div>
+    <div class="gp-chip cn">
+      <div class="chip-ico"><i class="fas fa-database"></i></div>
+      <div>
+        <div class="chip-val">{{ total_members }}</div>
+        <div class="chip-lbl">Total registered</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── MAIN CONTENT ──────────────────────────────────────────── -->
+  <div class="mg">
+
+    <!-- FULL-WIDTH COLUMN ───────────────────────────────────────── -->
+    <div class="mg-l">
+
+      <!-- 7-Day Trend Chart -->
+      <div class="card">
+        <div class="card-head">
+          <span class="card-title">
+            <span class="ct-ico"><i class="fas fa-chart-line"></i></span>
+            7-Day Attendance Trend
+          </span>
+          <a href="{% url 'owner_attendance' %}" class="card-lnk">
+            View all <i class="fas fa-arrow-right" style="font-size:10px;"></i>
+          </a>
+        </div>
+        <div class="chart-body">
+          <canvas id="gpTrendChart" height="100"></canvas>
+        </div>
+      </div>
+
+      <!-- Members Table -->
+      <div class="card">
+        <div class="card-head">
+          <span class="card-title">
+            <span class="ct-ico"><i class="fas fa-users"></i></span>
+            Members
+          </span>
+          <span class="pill neutral">{{ total_members }}</span>
+        </div>
+        <div class="t-wrap">
+          <table class="gt">
+            <thead>
+              <tr>
+                <th>Member</th>
+                <th>Status</th>
+                <th>Plan</th>
+                <th>Expiry</th>
+                <th>Face ID</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for row in member_rows %}
+              <tr>
+                <td>
+                  <div class="mcell">
+                    <div class="mav">
+                      {{ row.user.first_name.0|upper|default:row.user.username.0|upper }}
+                    </div>
+                    <div>
+                      <div class="mn">{{ row.user.get_full_name|default:row.user.username }}</div>
+                      <div class="me">{{ row.user.email }}</div>
+                    </div>
+                  </div>
+                </td>
+                <td>
+                  <span class="pill {{ row.profile.membership_status|default:'inactive' }}">
+                    {{ row.profile.get_membership_status_display }}
+                  </span>
+                </td>
+                <td class="tx-d">
+                  {% if row.payment %}
+                    {{ row.payment.get_plan_display }}
+                  {% else %}
+                    <span class="tx-dash">—</span>
+                  {% endif %}
+                </td>
+                <td>
+                  {% if row.payment and row.payment.expiry_date %}
+                    {% if row.payment.is_expired %}
+                      <span class="tx-r">
+                        <i class="fas fa-circle-exclamation" style="font-size:9px;margin-right:3px;"></i>
+                        {{ row.payment.expiry_date|date:"M j, Y" }}
+                      </span>
+                    {% else %}
+                      <span class="tx-d">{{ row.payment.expiry_date|date:"M j, Y" }}</span>
+                    {% endif %}
+                  {% else %}
+                    <span class="tx-dash">—</span>
+                  {% endif %}
+                </td>
+                <td>
+                  {% if row.profile.face_registered %}
+                    <i class="fas fa-circle-check face-y" title="Registered"></i>
+                  {% else %}
+                    <i class="fas fa-circle-xmark face-n" title="Not registered"></i>
+                  {% endif %}
+                </td>
+                <td>
+                  <div class="ta">
+                    <a href="{% url 'member_detail' row.user.id %}"
+                       class="ta-btn" title="View Profile">
+                      <i class="fas fa-eye"></i>
+                    </a>
+                    <a href="{% url 'update_payment' row.user.id %}"
+                       class="ta-btn pay" title="Manage Payment">
+                      <i class="fas fa-credit-card"></i>
+                    </a>
+                  </div>
+                </td>
+              </tr>
+              {% empty %}
+              <tr class="empty">
+                <td colspan="6">
+                  <i class="fas fa-users-slash"
+                     style="margin-right:8px;opacity:.35;"></i>
+                  No members yet.
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Recent Payments Table -->
+      <div class="card">
+        <div class="card-head">
+          <span class="card-title">
+            <span class="ct-ico"><i class="fas fa-credit-card"></i></span>
+            Recent Payments
+          </span>
+        </div>
+        <div class="t-wrap">
+          <table class="gt">
+            <thead>
+              <tr>
+                <th>Member</th>
+                <th>Plan</th>
+                <th>Amount</th>
+                <th>Status</th>
+                <th>Paid On</th>
+                <th>Expires</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for pay in payments %}
+              <tr>
+                <td>
+                  <span class="mn">
+                    {{ pay.user.get_full_name|default:pay.user.username }}
+                  </span>
+                </td>
+                <td class="tx-d">{{ pay.get_plan_display }}</td>
+                <td>
+                  <span class="amt">
+                    {% if pay.amount %}
+                      ₱{{ pay.amount|floatformat:0 }}
+                    {% elif pay.plan == 'daily' %}₱60
+                    {% elif pay.plan == 'monthly' %}₱500
+                    {% elif pay.plan == 'quarterly' %}₱1,400
+                    {% elif pay.plan == 'annual' %}₱5,000
+                    {% else %}—
+                    {% endif %}
+                  </span>
+                </td>
+                <td>
+                  <span class="pill {{ pay.status }}">
+                    <i class="fas fa-circle" style="font-size:5px;"></i>
+                    {{ pay.get_status_display }}
+                  </span>
+                </td>
+                <td class="tx-d">
+                  {% if pay.payment_date %}
+                    {{ pay.payment_date|date:"M j, Y" }}
+                  {% else %}—
+                  {% endif %}
+                </td>
+                <td>
+                  {% if pay.expiry_date %}
+                    {% if pay.is_expired %}
+                      <span class="tx-r">{{ pay.expiry_date|date:"M j, Y" }}</span>
+                    {% else %}
+                      <span class="tx-d">{{ pay.expiry_date|date:"M j, Y" }}</span>
+                    {% endif %}
+                  {% else %}
+                    <span class="tx-dash">—</span>
+                  {% endif %}
+                </td>
+              </tr>
+              {% empty %}
+              <tr class="empty">
+                <td colspan="6">No payments recorded yet.</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div><!-- /mg-l -->
+
+    <!-- BOTTOM ROW: Check-Ins + Announcements ───────────────────── -->
+    <div class="mg-b">
+
+      <!-- Today's Check-Ins -->
+      <div class="card">
+        <div class="card-head">
+          <span class="card-title">
+            <span class="ct-ico"><i class="fas fa-calendar-check"></i></span>
+            Today's Check-Ins
+          </span>
+          <span class="pill active">{{ present_today }}</span>
+        </div>
+
+        <div class="att-list">
+          {% for att in todays_attendance %}
+          <div class="att-row">
+            <div style="display:flex; align-items:center; gap:12px;">
+              <div class="mav" style="width:34px;height:34px;font-size:12px;">
+                {{ att.user.first_name.0|upper|default:att.user.username.0|upper }}
+              </div>
+              <div>
+                <div class="att-n">
+                  {{ att.user.get_full_name|default:att.user.username }}
+                </div>
+                <div class="att-t">{{ att.time_in|time:"h:i A" }}</div>
+              </div>
+            </div>
+            <span class="method">{{ att.get_login_method_display }}</span>
+          </div>
+          {% empty %}
+          <div class="att-empty">
+            <i class="fas fa-door-closed"></i>
+            <div>No check-ins yet today</div>
+            <small style="opacity:.45; display:block; margin-top:4px;">
+              Activity will appear here
+            </small>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+
+      <!-- Announcements -->
+      <div class="card">
+        <div class="card-head">
+          <span class="card-title">
+            <span class="ct-ico"><i class="fas fa-bullhorn"></i></span>
+            Announcements
+          </span>
+          <a href="{% url 'owner_create_announcement' %}" class="card-lnk">
+            <i class="fas fa-plus"></i> New
+          </a>
+        </div>
+
+        <div class="ann-list">
+          {% for ann in announcements %}
+          <div class="ann pr-{{ ann.priority }}">
+            <div class="ann-top">
+              <div style="flex:1;">
+                <div class="ann-title">{{ ann.title }}</div>
+                <div class="ann-body">{{ ann.body|truncatechars:90 }}</div>
+                <div class="ann-meta">
+                  {{ ann.get_priority_display }} &bull;
+                  {{ ann.created_at|date:"M j, Y" }}
+                </div>
+              </div>
+              <div class="ann-acts">
+                <a href="{% url 'edit_announcement' ann.pk %}"
+                   class="ann-btn ab-e" title="Edit">
+                  <i class="fas fa-pen"></i>
+                </a>
+                <form method="POST"
+                      action="{% url 'delete_announcement' ann.pk %}"
+                      style="margin:0;">
+                  {% csrf_token %}
+                  <button type="submit" class="ann-btn ab-d" title="Delete">
+                    <i class="fas fa-trash"></i>
+                  </button>
+                </form>
+              </div>
+            </div>
+          </div>
+          {% empty %}
+          <div class="ann-empty">
+            <i class="fas fa-bullhorn"></i>
+            <div>No announcements yet</div>
+            <small style="opacity:.45; display:block; margin-top:4px;">
+              Create one to notify members
+            </small>
+            <a href="{% url 'owner_create_announcement' %}"
+               class="btn-red"
+               style="margin-top:16px; font-size:12px; padding:8px 16px;">
+              <i class="fas fa-plus"></i>
+              Create Announcement
+            </a>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+
+    </div><!-- /mg-b -->
+
+  </div><!-- /mg -->
+
+</div><!-- /gp -->
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+<script>
+(function () {
+  'use strict';
+
+  var data   = {{ trend_data|safe }};
+  var canvas = document.getElementById('gpTrendChart');
+  if (!canvas || !data || !data.length) return;
+
+  /* ── gradient fill helper ── */
+  function makeGradient(ctx, chartArea) {
+    var g = ctx.createLinearGradient(0, chartArea.top, 0, chartArea.bottom);
+    g.addColorStop(0,   'rgba(255,51,71,.20)');
+    g.addColorStop(0.6, 'rgba(255,51,71,.05)');
+    g.addColorStop(1,   'rgba(255,51,71,.00)');
+    return g;
+  }
+
+  new Chart(canvas, {
+    type: 'line',
+    data: {
+      labels: data.map(function (d) { return d.date; }),
+      datasets: [{
+        label: 'Check-ins',
+        data: data.map(function (d) { return d.count; }),
+        borderColor: '#ff3347',
+        borderWidth: 2.5,
+        backgroundColor: function (context) {
+          var chart = context.chart;
+          var ca    = chart.chartArea;
+          if (!ca) return 'transparent';
+          return makeGradient(chart.ctx, ca);
+        },
+        pointBackgroundColor: '#ff3347',
+        pointBorderColor:     '#07090f',
+        pointBorderWidth:     2.5,
+        pointRadius:          5,
+        pointHoverRadius:     7,
+        tension: 0.42,
+        fill:    true
+      }]
+    },
+    options: {
+      responsive: true,
+      interaction: { mode: 'index', intersect: false },
+      scales: {
+        y: {
+          beginAtZero: true,
+          ticks: {
+            stepSize: 1,
+            color: '#4a4c60',
+            font: { family: 'DM Sans', size: 11 }
+          },
+          grid: { color: 'rgba(255,255,255,.035)' },
+          border: { display: false }
+        },
+        x: {
+          ticks: {
+            color: '#4a4c60',
+            font: { family: 'DM Sans', size: 11 }
+          },
+          grid:   { display: false },
+          border: { display: false }
+        }
+      },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor:  '#181b28',
+          borderColor:      'rgba(255,255,255,.08)',
+          borderWidth:      1,
+          padding:          14,
+          cornerRadius:     10,
+          titleColor:       '#8b8ea0',
+          bodyColor:        '#ffffff',
+          titleFont:        { family: 'DM Sans', size: 11 },
+          bodyFont:         { family: 'Syne', size: 20, weight: '700' },
+          displayColors:    false,
+          callbacks: {
+            title: function (i) { return i[0].label; },
+            label: function (c) {
+              var v = c.parsed.y;
+              return v + ' check-in' + (v !== 1 ? 's' : '');
+            }
+          }
+        }
+      }
+    }
+  });
+})();
+</script>
+{% endblock %}

@@ -1,0 +1,2689 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Workout Plan{% endblock %}
+
+{% block extra_css %}
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;600;700&display=swap');
+
+  :root {
+    --bg:       #0a0a0c;
+    --card:     #111114;
+    --border:   #1e1e24;
+    --accent:   #c8ff00;
+    --text:     #eeeef0;
+    --muted:    #555560;
+    --red:      #ff3b55;
+    --green:    #00e676;
+    --blue:     #2979ff;
+  }
+
+  * { box-sizing: border-box; }
+  body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; margin: 0; }
+
+  /* ── Header ── */
+  .ph {
+    background: linear-gradient(180deg, #141418 0%, var(--bg) 100%);
+    border-bottom: 1px solid var(--border);
+    padding: 1.4rem 0;
+    margin-bottom: 1.8rem;
+  }
+  .ph-title { font-family: 'Bebas Neue', sans-serif; font-size: 2.4rem; letter-spacing: 1px; line-height: 1; }
+  .ph-title em { color: var(--accent); font-style: normal; }
+  .ph-sub { color: var(--muted); font-size: .85rem; margin-top: .2rem; }
+  .ph-sub strong { color: var(--text); }
+
+  .btn-suggest {
+    background: var(--accent);
+    color: #0a0a0c;
+    border: none;
+    font-weight: 700;
+    font-family: 'DM Sans', sans-serif;
+    padding: .6rem 1.4rem;
+    border-radius: 8px;
+    font-size: .875rem;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: .4rem;
+    transition: transform .15s, box-shadow .15s;
+  }
+  .btn-suggest:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(200,255,0,.3);
+    color: #0a0a0c;
+  }
+
+  /* ── Day Card ── */
+  .day-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    overflow: hidden;
+    height: 100%;
+    transition: border-color .2s, box-shadow .2s;
+    display: flex;
+    flex-direction: column;
+  }
+  .day-card:hover { border-color: #2e2e38; }
+  .day-card.is-today { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent), 0 8px 32px rgba(200,255,0,.08); }
+  .day-card.is-rest  { opacity: .6; }
+
+  .dc-head {
+    padding: .85rem 1rem;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: .5rem;
+  }
+  .dc-day  { font-weight: 700; font-size: .95rem; }
+  .dc-mg   { font-size: .72rem; color: var(--accent); font-weight: 600; letter-spacing: .3px; margin-top: 1px; }
+  .badge   { font-size: .65rem; font-weight: 700; padding: 2px 8px; border-radius: 20px; text-transform: uppercase; letter-spacing: .5px; }
+  .badge-today { background: var(--accent); color: #0a0a0c; }
+  .badge-rest  { background: #1e1e24; color: var(--muted); }
+
+  .ring { width: 28px; height: 28px; flex-shrink: 0; transform: rotate(-90deg); }
+  .ring circle { fill: none; stroke-width: 3; }
+  .ring .bg   { stroke: var(--border); }
+  .ring .fill { stroke: var(--green); stroke-linecap: round; transition: stroke-dashoffset .4s ease; }
+
+  .dc-body { flex: 1; padding: .6rem .9rem; min-height: 90px; }
+  .empty   { text-align: center; color: var(--muted); font-size: .8rem; padding: 1.2rem 0; line-height: 1.6; }
+
+  .ex-item {
+    display: flex;
+    align-items: center;
+    gap: .55rem;
+    padding: .42rem 0;
+    border-bottom: 1px solid rgba(255,255,255,.035);
+    font-size: .85rem;
+  }
+  .ex-item:last-child { border-bottom: none; }
+
+  .ex-check {
+    width: 20px; height: 20px; flex-shrink: 0;
+    border: 2px solid var(--border); border-radius: 5px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    font-size: .65rem; transition: all .15s;
+    color: transparent;
+  }
+  .ex-check.done { background: var(--green); border-color: var(--green); color: #0a0a0c; }
+
+  .ex-name { flex: 1; font-weight: 500; }
+  .ex-name.done { text-decoration: line-through; color: var(--muted); }
+  .ex-meta { font-size: .72rem; color: var(--muted); white-space: nowrap; }
+
+  .ex-acts { display: flex; gap: .15rem; opacity: 0; transition: opacity .15s; }
+  .ex-item:hover .ex-acts { opacity: 1; }
+  .btn-act {
+    background: none; border: none; padding: 3px 5px; border-radius: 4px;
+    cursor: pointer; font-size: .78rem; color: var(--muted);
+    transition: color .15s, background .15s;
+  }
+  .btn-act:hover { color: var(--text); background: rgba(255,255,255,.06); }
+  .btn-act.del:hover { color: var(--red); background: rgba(255,59,85,.08); }
+
+  /* 👁 View button */
+  .btn-act.view {
+    color: var(--accent);
+    border: 1px solid rgba(200,255,0,.25);
+    background: rgba(200,255,0,.06);
+    padding: 2px 6px;
+    font-size: .72rem;
+  }
+  .btn-act.view:hover { background: rgba(200,255,0,.14); border-color: var(--accent); color: var(--accent); }
+
+  .dc-foot {
+    padding: .65rem .9rem;
+    border-top: 1px solid var(--border);
+    display: flex; gap: .4rem; flex-wrap: wrap;
+  }
+  .btn-fa {
+    font-size: .75rem; font-weight: 600; padding: .32rem .8rem;
+    border-radius: 6px; border: 1px solid var(--border);
+    background: transparent; color: var(--text);
+    cursor: pointer; text-decoration: none;
+    display: inline-flex; align-items: center; gap: .25rem;
+    transition: all .15s;
+  }
+  .btn-fa:hover { background: #1a1a20; border-color: #2e2e38; color: var(--text); }
+  .btn-fa.lib  { border-color: rgba(41,121,255,.5); color: var(--blue); }
+  .btn-fa.lib:hover { background: rgba(41,121,255,.08); border-color: var(--blue); }
+  .btn-fa.rest { border-color: var(--muted); color: var(--muted); }
+  .btn-fa.rest:hover { border-color: var(--red); color: var(--red); background: rgba(255,59,85,.06); }
+  .btn-fa.unrest { border-color: rgba(0,230,118,.4); color: var(--green); }
+  .btn-fa.unrest:hover { background: rgba(0,230,118,.08); }
+
+  .alert-custom {
+    background: #111114; border: 1px solid var(--border);
+    color: var(--text); border-radius: 10px;
+    padding: .75rem 1rem; font-size: .875rem;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .alert-custom.success { border-left: 3px solid var(--green); }
+  .alert-custom.error   { border-left: 3px solid var(--red); }
+  .alert-custom.info    { border-left: 3px solid var(--blue); }
+
+  #toasts {
+    position: fixed; bottom: 1.5rem; right: 1.5rem;
+    z-index: 9999; display: flex; flex-direction: column; gap: .45rem;
+  }
+  .toast {
+    background: #18181e; border: 1px solid var(--border);
+    color: var(--text); padding: .65rem 1rem;
+    border-radius: 10px; font-size: .83rem; font-weight: 500;
+    box-shadow: 0 4px 24px rgba(0,0,0,.6);
+    animation: toastIn .22s ease;
+    max-width: 280px;
+  }
+  .toast.ok  { border-left: 3px solid var(--green); }
+  .toast.err { border-left: 3px solid var(--red); }
+  @keyframes toastIn { from { transform: translateX(50px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+
+  /* ── Exercise Animation Modal ── */
+  #exModal {
+    display: none;
+    position: fixed; inset: 0; z-index: 10000;
+    background: rgba(0,0,0,.78);
+    align-items: center; justify-content: center;
+    padding: 1rem;
+  }
+  #exModal.open { display: flex; }
+
+  .modal-box {
+    background: #111114;
+    border: 1px solid #2e2e38;
+    border-radius: 16px;
+    width: 100%;
+    max-width: 500px;
+    overflow: hidden;
+    animation: modalIn .22s ease;
+  }
+  @keyframes modalIn { from { transform: scale(.94); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
+  .modal-head {
+    padding: 1rem 1.1rem .85rem;
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: flex-start; justify-content: space-between; gap: .75rem;
+  }
+  .modal-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.65rem; letter-spacing: .8px; line-height: 1;
+  }
+  .modal-muscles { display: flex; gap: .3rem; flex-wrap: wrap; margin-top: .35rem; }
+  .muscle-tag {
+    font-size: .68rem; font-weight: 600;
+    padding: 2px 8px; border-radius: 12px;
+    background: rgba(200,255,0,.08); color: var(--accent);
+    border: 1px solid rgba(200,255,0,.2);
+  }
+  .modal-close {
+    background: #1e1e24; border: none; color: var(--text);
+    width: 30px; height: 30px; border-radius: 50%;
+    font-size: 1.1rem; cursor: pointer; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    transition: background .15s;
+  }
+  .modal-close:hover { background: #2e2e38; }
+
+  .modal-canvas-wrap {
+    background: var(--bg);
+    display: flex; align-items: center; justify-content: center;
+    padding: .5rem 0;
+  }
+  #exCanvas { display: block; }
+
+  .modal-info {
+    padding: .7rem 1.1rem;
+    border-top: 1px solid var(--border);
+    display: flex; align-items: center; gap: .5rem; flex-wrap: wrap;
+  }
+  .phase-pill {
+    font-size: .68rem; font-weight: 700;
+    padding: 2px 10px; border-radius: 20px;
+    background: #1a1a20; color: var(--muted);
+    border: 1px solid var(--border);
+    letter-spacing: .3px; text-transform: capitalize;
+    transition: all .2s;
+  }
+  .phase-pill.active { background: var(--accent); color: #0a0a0c; border-color: var(--accent); }
+  .modal-tip { font-size: .78rem; color: var(--muted); flex: 1; min-width: 160px; }
+  .modal-tip strong { color: var(--text); font-weight: 600; }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<div class="ph">
+  <div class="container">
+    <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+      <div>
+        <div class="ph-title">Workout <em>Plan</em></div>
+        <div class="ph-sub">Today is <strong>{{ today_name }}</strong></div>
+      </div>
+      <a href="{% url 'suggest_workout' %}" class="btn-suggest">
+        ⚡ Suggest Today's Workout
+      </a>
+    </div>
+  </div>
+</div>
+
+<div class="container pb-5">
+
+  {% if messages %}
+    <div class="mb-3 d-flex flex-column gap-2">
+      {% for msg in messages %}
+        <div class="alert-custom {{ msg.tags|default:'info' }}">
+          <span>{{ msg }}</span>
+          <button onclick="this.parentElement.remove()" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:1rem;padding:0 0 0 .5rem;">×</button>
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+
+  <div class="row g-3">
+    {% for day, wd in workout_days %}
+      <div class="col-sm-6 col-lg-4 col-xl-3">
+        <div class="day-card {% if day == today_name %}is-today{% endif %} {% if wd and wd.is_rest_day %}is-rest{% endif %}">
+
+          <div class="dc-head">
+            <div>
+              <div class="dc-day">{{ day }}</div>
+              {% if wd and not wd.is_rest_day and wd.muscle_group %}
+                <div class="dc-mg">{{ wd.muscle_group }}</div>
+              {% endif %}
+            </div>
+            <div class="d-flex align-items-center gap-2">
+              {% if day == today_name %}
+                <span class="badge badge-today">Today</span>
+              {% endif %}
+              {% if wd and wd.is_rest_day %}
+                <span class="badge badge-rest">Rest</span>
+              {% elif wd and wd.exercises.exists %}
+                <svg class="ring" viewBox="0 0 28 28" xmlns="http://www.w3.org/2000/svg">
+                  <circle class="bg" cx="14" cy="14" r="11"/>
+                  <circle class="fill" cx="14" cy="14" r="11"
+                    stroke-dasharray="69.12" stroke-dashoffset="69.12"
+                    id="ring-{{ day|slugify }}"/>
+                </svg>
+              {% endif %}
+            </div>
+          </div>
+
+          <div class="dc-body" id="exlist-{{ day|slugify }}">
+            {% if wd and wd.is_rest_day %}
+              <div class="empty">😴 Rest &amp; Recovery Day</div>
+            {% elif wd and wd.exercises.exists %}
+              {% for ex in wd.exercises.all %}
+                <div class="ex-item" id="ex-{{ ex.id }}">
+                  <div class="ex-check {% if ex.is_completed %}done{% endif %}"
+                       onclick="toggleEx({{ ex.id }}, this)" title="Toggle complete">
+                    {% if ex.is_completed %}✓{% endif %}
+                  </div>
+                  <div class="ex-name {% if ex.is_completed %}done{% endif %}">{{ ex.name }}</div>
+                  <div class="ex-meta">{{ ex.sets }}×{{ ex.reps }}{% if ex.weight_kg %} · {{ ex.weight_kg }}kg{% endif %}</div>
+                  <div class="ex-acts">
+                    <button class="btn-act view" onclick="openExModal('{{ ex.name|escapejs }}')" title="Animate">👁</button>
+                    <a href="{% url 'edit_exercise' ex.id %}" class="btn-act" title="Edit">✏️</a>
+                    <form method="post" action="{% url 'delete_exercise' ex.id %}" style="margin:0;"
+                          onsubmit="return confirm('Remove {{ ex.name }}?')">
+                      {% csrf_token %}
+                      <button type="submit" class="btn-act del" title="Delete">🗑</button>
+                    </form>
+                  </div>
+                </div>
+              {% endfor %}
+            {% else %}
+              <div class="empty">No exercises yet.<br><small>Pick from library or add manually.</small></div>
+            {% endif %}
+          </div>
+
+          <div class="dc-foot">
+            {% if not wd or not wd.is_rest_day %}
+              <a href="{% url 'exercise_library' day %}" class="btn-fa lib">📚 Library</a>
+              <a href="{% url 'add_exercise' day %}" class="btn-fa">＋ Manual</a>
+            {% endif %}
+            <form method="post" action="{% url 'toggle_rest_day' day %}" style="margin:0;">
+              {% csrf_token %}
+              {% if wd and wd.is_rest_day %}
+                <button type="submit" class="btn-fa unrest">✅ Train</button>
+              {% else %}
+                <button type="submit" class="btn-fa rest">💤 Rest</button>
+              {% endif %}
+            </form>
+          </div>
+
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+
+</div>
+
+<!-- Exercise Animation Modal -->
+<div id="exModal" onclick="if(event.target===this)closeExModal()">
+  <div class="modal-box">
+    <div class="modal-head">
+      <div>
+        <div class="modal-title" id="modalTitle">Exercise</div>
+        <div class="modal-muscles" id="modalMuscles"></div>
+      </div>
+      <button class="modal-close" onclick="closeExModal()">×</button>
+    </div>
+    <div class="modal-canvas-wrap" id="modalCanvasWrap">
+      <canvas id="exCanvas" width="460" height="240"></canvas>
+    </div>
+    <div class="modal-info">
+      <div id="modalPills" style="display:flex;gap:.4rem;flex-wrap:wrap;"></div>
+      <div class="modal-tip" id="modalTip"></div>
+    </div>
+  </div>
+</div>
+
+
+<div id="toasts"></div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const CSRF = '{{ csrf_token }}';
+
+/* ── Toggle complete ── */
+function toggleEx(id, el) {
+  fetch(`/workout/toggle/${id}/`, {
+    method: 'POST', headers: { 'X-CSRFToken': CSRF }
+  })
+  .then(r => r.json())
+  .then(d => {
+    if (!d.success) return;
+    const item = document.getElementById(`ex-${id}`);
+    const name = item.querySelector('.ex-name');
+    if (d.completed) {
+      el.classList.add('done'); el.textContent = '✓';
+      name.classList.add('done'); showToast('✓ Exercise logged!', 'ok');
+    } else {
+      el.classList.remove('done'); el.textContent = '';
+      name.classList.remove('done'); showToast('Marked incomplete.', '');
+    }
+    refreshRing(item);
+  });
+}
+
+function refreshRing(itemEl) {
+  const list = itemEl.closest('.dc-body');
+  if (!list) return;
+  const slug = list.id.replace('exlist-', '');
+  const ring = document.getElementById(`ring-${slug}`);
+  if (!ring) return;
+  const total = list.querySelectorAll('.ex-item').length;
+  const done  = list.querySelectorAll('.ex-check.done').length;
+  if (!total) return;
+  const C = 2 * Math.PI * 11;
+  ring.style.strokeDasharray  = C;
+  ring.style.strokeDashoffset = C - (done / total) * C;
+}
+
+function showToast(msg, type) {
+  const c = document.getElementById('toasts');
+  const t = document.createElement('div');
+  t.className = `toast ${type}`; t.textContent = msg;
+  c.appendChild(t);
+  setTimeout(() => t.remove(), 3000);
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  document.querySelectorAll('.dc-body').forEach(list => {
+    const first = list.querySelector('.ex-item');
+    if (first) refreshRing(first);
+  });
+});
+
+/* ══════════════════════════════════════════════════
+   EXERCISE ANIMATION ENGINE
+══════════════════════════════════════════════════ */
+const BC="#7F77DD", AC="#1D9E75", SK="#EF9F27", EQ="#888", PL="#C62828";
+
+const limb=(c,x1,y1,x2,y2,col,w)=>{c.strokeStyle=col;c.lineWidth=w;c.lineCap="round";c.beginPath();c.moveTo(x1,y1);c.lineTo(x2,y2);c.stroke()};
+const joint=(c,cx,cy,r=5)=>{c.fillStyle=BC;c.beginPath();c.arc(cx,cy,r,0,Math.PI*2);c.fill()};
+const head=(c,cx,cy,r=17)=>{c.fillStyle=SK;c.beginPath();c.arc(cx,cy,r,0,Math.PI*2);c.fill();c.fillStyle="#333";c.beginPath();c.arc(cx-5,cy-2,2,0,Math.PI*2);c.fill();c.beginPath();c.arc(cx+5,cy-2,2,0,Math.PI*2);c.fill()};
+const bar=(c,x,y,w=180,h=12)=>{c.fillStyle=EQ;c.fillRect(x,y,w,h);c.fillStyle="#bbb";c.fillRect(x+6,y+2,w-12,h*.4);c.fillStyle=PL;c.fillRect(x-10,y-5,12,h+10);c.fillRect(x+w-2,y-5,12,h+10);c.fillStyle="#a00";c.fillRect(x-8,y-3,8,h+6);c.fillRect(x+w,y-3,8,h+6)};
+const db=(c,x,y)=>{c.fillStyle=EQ;c.fillRect(x,y,26,8);c.fillStyle="#555";c.fillRect(x-5,y-4,7,16);c.fillRect(x+24,y-4,7,16)};
+const gnd=(c,cx,y,s=130)=>{c.strokeStyle="#ffffff14";c.lineWidth=1.5;c.beginPath();c.moveTo(cx-s,y);c.lineTo(cx+s,y);c.stroke()};
+const cable=(c,x1,y1,x2,y2)=>{c.strokeStyle="#ffffff1a";c.lineWidth=1.5;c.beginPath();c.moveTo(x1,y1);c.lineTo(x2,y2);c.stroke()};
+
+function standing(c,cx,hY,nY,wY,kY,fY){
+  head(c,cx,hY-14);
+  limb(c,cx,nY,cx,wY,BC,10);
+  limb(c,cx-40,nY+8,cx+40,nY+8,BC,6);
+  limb(c,cx,wY,cx-26,kY,BC,9); limb(c,cx,wY,cx+26,kY,BC,9);
+  joint(c,cx-26,kY); joint(c,cx+26,kY);
+  limb(c,cx-26,kY,cx-20,fY,BC,8); limb(c,cx+26,kY,cx+20,fY,BC,8);
+  limb(c,cx-20,fY,cx-32,fY+4,BC,6); limb(c,cx+20,fY,cx+32,fY+4,BC,6);
+}
+
+function hinged(c,cx,cy,ang){
+  const tx=Math.sin(ang)*65,ty=Math.cos(ang)*65;
+  const hx=cx-tx,hy=cy-ty;
+  head(c,hx,hy-18);
+  limb(c,hx,hy,cx,cy,BC,10);
+  limb(c,cx,cy,cx-24,cy+60,BC,9); limb(c,cx,cy,cx+24,cy+60,BC,9);
+  limb(c,cx-24,cy+60,cx-18,cy+120,BC,8); limb(c,cx+24,cy+60,cx+18,cy+120,BC,8);
+  joint(c,cx-24,cy+60); joint(c,cx+24,cy+60);
+  return {sx:hx, sy:hy};
+}
+
+/* All animations — keyed by exercise name (lowercase, trimmed) */
+const ANIMS = {};
+
+/* helper to register */
+const reg = (names, fn) => names.forEach(n => ANIMS[n.toLowerCase().trim()] = fn);
+
+reg(["barbell bench press","standard bench press"], (t,c,W,H)=>{
+  const s=Math.sin(t*3),cy=H*.5,a=.45+s*.38;
+  c.fillStyle="#1e1e2a";c.fillRect(W/2-85,cy+30,170,16);
+  standing(c,W/2,cy-55,cy-55,cy+20,cy+80,cy+160);
+  const lx=W/2-52,rx=W/2+52,ay=cy-25;
+  limb(c,lx,ay,lx-32*Math.cos(a),ay-42*Math.sin(a),AC,7);
+  limb(c,rx,ay,rx+32*Math.cos(a),ay-42*Math.sin(a),AC,7);
+  bar(c,W/2-90,ay-42*Math.sin(a)-8,180,12);
+});
+
+reg(["dumbbell bench press"], (t,c,W,H)=>{
+  const s=Math.sin(t*3),cy=H*.5,a=.45+s*.4;
+  c.fillStyle="#1e1e2a";c.fillRect(W/2-85,cy+30,170,16);
+  standing(c,W/2,cy-55,cy-55,cy+20,cy+80,cy+160);
+  const lx=W/2-52,rx=W/2+52,ay=cy-25;
+  const lhx=lx-32*Math.cos(a),lhy=ay-42*Math.sin(a);
+  const rhx=rx+32*Math.cos(a),rhy=ay-42*Math.sin(a);
+  limb(c,lx,ay,lhx,lhy,AC,7); limb(c,rx,ay,rhx,rhy,AC,7);
+  db(c,lhx-14,lhy-6); db(c,rhx+2,rhy-6);
+});
+
+reg(["incline barbell press","incline barbell"], (t,c,W,H)=>{
+  const s=Math.sin(t*3),cy=H*.5,a=.52+s*.32;
+  c.fillStyle="#1e1e2a";c.fillRect(W/2-70,cy+20,140,14);c.fillRect(W/2-50,cy-40,100,70);
+  standing(c,W/2,cy-55,cy-55,cy+18,cy+70,cy+145);
+  const lx=W/2-50,rx=W/2+50,ay=cy-45;
+  limb(c,lx,ay,lx-30*Math.cos(a),ay-50*Math.sin(a),AC,7);
+  limb(c,rx,ay,rx+30*Math.cos(a),ay-50*Math.sin(a),AC,7);
+  bar(c,W/2-80,ay-50*Math.sin(a)-8,160,12);
+});
+
+reg(["incline dumbbell press","incline dumbbell"], (t,c,W,H)=>{
+  const s=Math.sin(t*3),cy=H*.5,a=.52+s*.32;
+  c.fillStyle="#1e1e2a";c.fillRect(W/2-70,cy+20,140,14);c.fillRect(W/2-50,cy-40,100,70);
+  standing(c,W/2,cy-55,cy-55,cy+18,cy+70,cy+145);
+  const lx=W/2-50,rx=W/2+50,ay=cy-45;
+  const lhx=lx-30*Math.cos(a),lhy=ay-50*Math.sin(a);
+  const rhx=rx+30*Math.cos(a),rhy=ay-50*Math.sin(a);
+  limb(c,lx,ay,lhx,lhy,AC,7); limb(c,rx,ay,rhx,rhy,AC,7);
+  db(c,lhx-14,lhy-6); db(c,rhx+2,rhy-6);
+});
+
+reg(["decline barbell press","decline press"], (t,c,W,H)=>{
+  const s=Math.sin(t*3),cy=H*.52,a=.45+s*.38;
+  c.fillStyle="#1e1e2a";c.fillRect(W/2-85,cy+25,170,16);
+  standing(c,W/2,cy-52,cy-52,cy+22,cy+80,cy+155);
+  const lx=W/2-52,rx=W/2+52,ay=cy-18;
+  limb(c,lx,ay,lx-30*Math.cos(a),ay-38*Math.sin(a),AC,7);
+  limb(c,rx,ay,rx+30*Math.cos(a),ay-38*Math.sin(a),AC,7);
+  bar(c,W/2-88,ay-38*Math.sin(a)-8,176,12);
+});
+
+reg(["chest dips","dips"], (t,c,W,H)=>{
+  const s=Math.sin(t*2.5),cy=H*.42+((s+1)/2)*38;
+  head(c,W/2,cy-110);
+  limb(c,W/2,cy-92,W/2,cy-15,BC,10);
+  limb(c,W/2-50,cy-82,W/2-50,cy+8,BC,9); limb(c,W/2+50,cy-82,W/2+50,cy+8,BC,9);
+  limb(c,W/2-50,cy-82,W/2,cy-82,BC,6); limb(c,W/2+50,cy-82,W/2,cy-82,BC,6);
+  c.fillStyle="#444";c.fillRect(W/2-64,cy-88,12,100);c.fillRect(W/2+52,cy-88,12,100);
+  limb(c,W/2,cy-15,W/2-28,cy+65,BC,9); limb(c,W/2,cy-15,W/2+28,cy+65,BC,9);
+  limb(c,W/2-28,cy+65,W/2-22,cy+125,BC,8); limb(c,W/2+28,cy+65,W/2+22,cy+125,BC,8);
+  joint(c,W/2-28,cy+65); joint(c,W/2+28,cy+65);
+  gnd(c,W/2,cy+130);
+});
+
+reg(["pec deck machine","pec deck"], (t,c,W,H)=>{
+  const s=Math.sin(t*2.5),cy=H*.44,sp=52+s*42;
+  c.fillStyle="#1e1e2a";c.fillRect(W/2-110,cy-95,220,190);
+  standing(c,W/2,cy-74,cy-74,cy+6,cy+66,cy+146);
+  limb(c,W/2-38,cy-22,W/2-sp,cy-22+s*12,AC,7);
+  limb(c,W/2+38,cy-22,W/2+sp,cy-22+s*12,AC,7);
+  c.fillStyle="#3a3a4a";c.fillRect(W/2-sp-8,cy-32+s*12,14,22);
+  c.fillRect(W/2+sp-6,cy-32+s*12,14,22);
+});
+
+reg(["standard push-ups","push-ups","push ups","pushups"], (t,c,W,H)=>{
+  const s=Math.sin(t*3),cy=H*.52+s*20;
+  head(c,W/2-100,cy-5);
+  limb(c,W/2-82,cy,W/2+65,cy,BC,10);
+  limb(c,W/2-42,cy-5,W/2-80,cy+28-s*18,AC,7);
+  limb(c,W/2+42,cy-5,W/2+80,cy+28-s*18,AC,7);
+  limb(c,W/2+65,cy,W/2+95,cy+6,BC,9);
+  gnd(c,W/2,cy+35);
+});
+
+reg(["diamond push-ups","diamond pushups"], (t,c,W,H)=>{
+  const s=Math.sin(t*3),cy=H*.52+s*16;
+  head(c,W/2-100,cy-5);
+  limb(c,W/2-82,cy,W/2+65,cy,BC,10);
+  limb(c,W/2-20,cy-5,W/2-2,cy+26-s*15,AC,7);
+  limb(c,W/2+20,cy-5,W/2+2,cy+26-s*15,AC,7);
+  limb(c,W/2+65,cy,W/2+95,cy+6,BC,9);
+  gnd(c,W/2,cy+35);
+});
+
+reg(["military press (standing)","overhead press","ohp","military press"], (t,c,W,H)=>{
+  const s=Math.sin(t*2.5),cy=H*.41,bY=cy-82-((s+1)/2)*58;
+  standing(c,W/2,cy-82,cy-82,cy,cy+60,cy+140);
+  limb(c,W/2-52,cy-30,W/2-64,bY+8,AC,7); limb(c,W/2+52,cy-30,W/2+64,bY+8,AC,7);
+  bar(c,W/2-80,bY,160,11);
+});
+
+reg(["seated dumbbell press","seated db press"], (t,c,W,H)=>{
+  const s=Math.sin(t*2.5),cy=H*.44,bY=cy-80-((s+1)/2)*50;
+  c.fillStyle="#1e1e2a";c.fillRect(W/2-55,cy+5,110,80);
+  head(c,W/2,cy-80); limb(c,W/2,cy-62,W/2,cy+12,BC,10);
+  const lhx=W/2-60,lhy=bY+8,rhx=W/2+60,rhy=bY+8;
+  limb(c,W/2-38,cy-28,lhx,lhy,AC,7); limb(c,W/2+38,cy-28,rhx,rhy,AC,7);
+  db(c,lhx-14,lhy-6); db(c,rhx+2,rhy-6);
+});
+
+reg(["arnold press"], (t,c,W,H)=>{
+  const s=Math.sin(t*2.5),cy=H*.44,bY=cy-78-((s+1)/2)*48;
+  const rot=((s+1)/2)*1.2;
+  head(c,W/2,cy-82); limb(c,W/2,cy-64,W/2,cy+8,BC,10);
+  const lhx=W/2-55+rot*25,lhy=bY+8,rhx=W/2+55-rot*25,rhy=bY+8;
+  limb(c,W/2-38,cy-28,lhx,lhy,AC,7); limb(c,W/2+38,cy-28,rhx,rhy,AC,7);
+  db(c,lhx-14,lhy-6); db(c,rhx+2,rhy-6);
+});
+
+reg(["lateral raises (dumbbell)","lateral raises","lateral raise","dumbbell lateral raise"], (t,c,W,H)=>{
+  const s=(Math.sin(t*2.5)+1)/2,cy=H*.41,sp=s*82;
+  standing(c,W/2,cy-82,cy-82,cy,cy+60,cy+140);
+  limb(c,W/2-38,cy-14,W/2-38-sp,cy-14-sp*.42,AC,7);
+  limb(c,W/2+38,cy-14,W/2+38+sp,cy-14-sp*.42,AC,7);
+  db(c,W/2-38-sp-14,cy-14-sp*.42-5); db(c,W/2+38+sp+2,cy-14-sp*.42-5);
+});
+
+reg(["face pulls (rope)","face pulls","face pull"], (t,c,W,H)=>{
+  const s=Math.sin(t*2.5),cy=H*.41,px=52+s*32;
+  standing(c,W/2,cy-82,cy-82,cy,cy+60,cy+140);
+  const hy=cy-55-s*10;
+  limb(c,W/2-36,cy-20,W/2-px,hy,AC,7); limb(c,W/2+36,cy-20,W/2+px,hy,AC,7);
+  cable(c,W+10,cy-60,W/2+px,hy); cable(c,W+10,cy-60,W/2-px,hy);
+});
+
+reg(["upright rows","upright row"], (t,c,W,H)=>{
+  const s=(Math.sin(t*3)+1)/2,cy=H*.41,lift=s*68;
+  standing(c,W/2,cy-82,cy-82,cy,cy+60,cy+140);
+  const ey=cy-30-lift*.6;
+  limb(c,W/2-20,cy-10,W/2-30,ey,AC,7); limb(c,W/2+20,cy-10,W/2+30,ey,AC,7);
+  bar(c,W/2-44,ey-4,88,9);
+});
+
+reg(["dumbbell shrugs","shrugs"], (t,c,W,H)=>{
+  const s=Math.sin(t*4.5),rise=((s+1)/2)*14,cy=H*.37-rise;
+  standing(c,W/2,cy-82,cy-82,cy,cy+60,cy+140);
+  limb(c,W/2-48,cy-5+rise,W/2-52,cy+52,AC,7);
+  limb(c,W/2+48,cy-5+rise,W/2+52,cy+52,AC,7);
+  db(c,W/2-66,cy+50); db(c,W/2+54,cy+50);
+});
+
+reg(["barbell shrugs","barbell shrug"], (t,c,W,H)=>{
+  const s=Math.sin(t*4.5),rise=((s+1)/2)*14,cy=H*.37-rise;
+  standing(c,W/2,cy-82,cy-82,cy,cy+60,cy+140);
+  limb(c,W/2-48,cy-5+rise,W/2-52,cy+52,AC,7);
+  limb(c,W/2+48,cy-5+rise,W/2+52,cy+52,AC,7);
+  bar(c,W/2-88,cy+48,176,11);
+});
+
+reg(["conventional deadlift","deadlift"], (t,c,W,H)=>{
+  const s=(Math.sin(t*2)+1)/2,ang=(1-s)*.78,cy=H*(.56-s*.16);
+  const{sx,sy}=hinged(c,W/2,cy,ang);
+  const hY=cy+70*Math.sin(ang)+(1-s)*42;
+  limb(c,sx-14,sy+8,W/2-52,hY,AC,7); limb(c,sx+14,sy+8,W/2+52,hY,AC,7);
+  bar(c,W/2-90,hY-2,180,12); gnd(c,W/2,cy+126);
+});
+
+reg(["sumo deadlift"], (t,c,W,H)=>{
+  const s=(Math.sin(t*2)+1)/2,ang=(1-s)*.58,cy=H*(.54-s*.14);
+  const{sx,sy}=hinged(c,W/2,cy,ang);
+  const hY=cy+60*Math.sin(ang)+(1-s)*38;
+  limb(c,sx-14,sy+8,W/2-52,hY,AC,7); limb(c,sx+14,sy+8,W/2+52,hY,AC,7);
+  bar(c,W/2-90,hY-2,180,12); gnd(c,W/2,cy+122);
+});
+
+reg(["pull-ups (wide grip)","pull-ups","pullups","pull ups"], (t,c,W,H)=>{
+  const s=Math.sin(t*2.5),bY=H*.52+s*42;
+  standing(c,W/2,bY-68,bY-68,bY+10,bY+72,bY+152);
+  limb(c,W/2-52,bY-48,W/2-78,H*.14,AC,7); limb(c,W/2+52,bY-48,W/2+78,H*.14,AC,7);
+  bar(c,W/2-100,H*.10,200,14);
+  c.strokeStyle="#555";c.lineWidth=4;
+  c.beginPath();c.moveTo(W/2-100,H*.10);c.lineTo(W/2-100,H*.02);c.stroke();
+  c.beginPath();c.moveTo(W/2+100,H*.10);c.lineTo(W/2+100,H*.02);c.stroke();
+});
+
+reg(["chin-ups (close grip)","chin-ups","chinups","chin ups"], (t,c,W,H)=>{
+  const s=Math.sin(t*2.5),bY=H*.52+s*42;
+  standing(c,W/2,bY-68,bY-68,bY+10,bY+72,bY+152);
+  limb(c,W/2-44,bY-48,W/2-62,H*.14,AC,7); limb(c,W/2+44,bY-48,W/2+62,H*.14,AC,7);
+  bar(c,W/2-72,H*.10,144,14);
+  c.strokeStyle="#555";c.lineWidth=4;
+  c.beginPath();c.moveTo(W/2-72,H*.10);c.lineTo(W/2-72,H*.02);c.stroke();
+  c.beginPath();c.moveTo(W/2+72,H*.10);c.lineTo(W/2+72,H*.02);c.stroke();
+});
+
+reg(["lat pulldown (wide)","lat pulldown","lat pull-down"], (t,c,W,H)=>{
+  const s=Math.sin(t*2.5),cy=H*.44,bY=H*.08+((s+1)/2)*62;
+  standing(c,W/2,cy-74,cy-74,cy+6,cy+66,cy+146);
+  limb(c,W/2-52,cy-38,W/2-80,bY+8,AC,7); limb(c,W/2+52,cy-38,W/2+80,bY+8,AC,7);
+  bar(c,W/2-86,bY,172,10); cable(c,W/2,H*.01,W/2,bY);
+});
+
+reg(["barbell row (overhand)","barbell row","bent-over row (underhand)","bent over row"], (t,c,W,H)=>{
+  const s=Math.sin(t*3),cy=H*.46;
+  const{sx,sy}=hinged(c,W/2,cy,.6);
+  const hY=cy+48-s*28;
+  limb(c,sx-12,sy+12,W/2-52,hY,AC,7); limb(c,sx+12,sy+12,W/2+52,hY,AC,7);
+  bar(c,W/2-78,hY+4,156,10); gnd(c,W/2,cy+125);
+});
+
+reg(["one-arm dumbbell row","dumbbell row","one arm row"], (t,c,W,H)=>{
+  const s=Math.sin(t*3),cy=H*.46;
+  const{sx,sy}=hinged(c,W/2,cy,.58);
+  const hY=cy+42-s*30;
+  c.fillStyle="#1e1e2a";c.fillRect(W/2-90,cy+65,85,16);
+  limb(c,sx+10,sy+8,W/2-68,cy+65,AC,7);
+  limb(c,sx+10,sy+8,W/2+48,hY,AC,7);
+  db(c,W/2+48,hY-6); gnd(c,W/2,cy+125);
+});
+
+reg(["seated cable row","cable row"], (t,c,W,H)=>{
+  const s=Math.sin(t*2.5),cy=H*.5;
+  head(c,W/2,cy-68); limb(c,W/2,cy-50,W/2,cy-5,BC,10);
+  const ex=70+s*50;
+  limb(c,W/2-20,cy-30,W/2-20-ex,cy-28,AC,7); limb(c,W/2+20,cy-30,W/2+20-ex,cy-28,AC,7);
+  cable(c,0,cy-28,W/2-20-ex,cy-28);
+  c.fillStyle="#666";c.fillRect(W/2-30-ex-10,cy-35,14,16);
+  c.fillStyle="#1e1e2a";c.fillRect(W/2-20,cy-5,85,20);
+});
+
+reg(["hyperextensions","hyperextension"], (t,c,W,H)=>{
+  const s=Math.sin(t*2.5),cy=H*.48,ang=.2+((s+1)/2)*.55;
+  head(c,W/2-82+Math.cos(ang)*55,cy-3-Math.sin(ang)*55);
+  limb(c,W/2-82+Math.cos(ang)*55,cy-Math.sin(ang)*55,W/2-82,cy,BC,10);
+  c.fillStyle="#1e1e2a";c.fillRect(W/2-90,cy-15,45,30);
+  limb(c,W/2-82,cy,W/2+70,cy,BC,10);
+  limb(c,W/2+70,cy,W/2+95,cy+8,BC,9);
+  gnd(c,W/2,cy+14);
+});
+
+reg(["barbell curls","barbell curl"], (t,c,W,H)=>{
+  const s=Math.sin(t*3),cy=H*.41,ang=.2+((s+1)/2)*1.15;
+  standing(c,W/2,cy-80,cy-80,cy,cy+60,cy+140);
+  const ey=cy+14;
+  limb(c,W/2-34,ey,(W/2-34)-Math.cos(ang)*55,ey-Math.sin(ang)*55,AC,7);
+  limb(c,W/2+34,ey,(W/2+34)+Math.cos(ang)*55,ey-Math.sin(ang)*55,AC,7);
+  db(c,(W/2-34)-Math.cos(ang)*55-14,ey-Math.sin(ang)*55-6);
+  db(c,(W/2+34)+Math.cos(ang)*55+2,ey-Math.sin(ang)*55-6);
+});
+
+reg(["dumbbell alternating curls","alternating curls","alt curls"], (t,c,W,H)=>{
+  const cy=H*.41;
+  const angL=.2+((Math.sin(t*3)+1)/2)*1.1;
+  const angR=.2+((Math.sin(t*3+Math.PI)+1)/2)*1.1;
+  standing(c,W/2,cy-80,cy-80,cy,cy+60,cy+140);
+  const ey=cy+14;
+  limb(c,W/2-34,ey,(W/2-34)-Math.cos(angL)*55,ey-Math.sin(angL)*55,AC,7);
+  limb(c,W/2+34,ey,(W/2+34)+Math.cos(angR)*55,ey-Math.sin(angR)*55,AC,7);
+  db(c,(W/2-34)-Math.cos(angL)*55-14,ey-Math.sin(angL)*55-6);
+  db(c,(W/2+34)+Math.cos(angR)*55+2,ey-Math.sin(angR)*55-6);
+});
+
+reg(["hammer curls","hammer curl"], (t,c,W,H)=>{
+  const s=Math.sin(t*3),cy=H*.41,ang=.2+((s+1)/2)*1.15;
+  standing(c,W/2,cy-80,cy-80,cy,cy+60,cy+140);
+  const ey=cy+14;
+  limb(c,W/2-34,ey,(W/2-34)-Math.cos(ang)*55,ey-Math.sin(ang)*55,AC,7);
+  limb(c,W/2+34,ey,(W/2+34)+Math.cos(ang)*55,ey-Math.sin(ang)*55,AC,7);
+  db(c,(W/2-34)-Math.cos(ang)*55-14,ey-Math.sin(ang)*55-6);
+  db(c,(W/2+34)+Math.cos(ang)*55+2,ey-Math.sin(ang)*55-6);
+});
+
+reg(["triceps pushdown (rope)","rope pushdown","tricep pushdown","triceps pushdown"], (t,c,W,H)=>{
+  const s=Math.sin(t*3),cy=H*.41,hY=cy-10+48+s*32;
+  standing(c,W/2,cy-80,cy-80,cy,cy+60,cy+140);
+  cable(c,W/2,H*.02,W/2,cy-10);
+  limb(c,W/2-22,cy-10,W/2-22,hY,AC,7); limb(c,W/2+22,cy-10,W/2+22,hY,AC,7);
+  bar(c,W/2-36,hY-4,72,9);
+});
+
+reg(["overhead triceps ext (db)","overhead tricep extension","overhead triceps extension"], (t,c,W,H)=>{
+  const s=Math.sin(t*3),cy=H*.41,ang=.8+s*.6;
+  standing(c,W/2,cy-80,cy-80,cy,cy+60,cy+140);
+  limb(c,W/2-28,cy-42,W/2-28,cy-80,AC,7); limb(c,W/2+28,cy-42,W/2+28,cy-80,AC,7);
+  const lhx=W/2-28+Math.sin(ang)*45,lhy=cy-80+Math.cos(ang)*45;
+  limb(c,W/2-28,cy-80,lhx,lhy,AC,7);
+  db(c,lhx-14,lhy-6);
+});
+
+reg(["skull crushers (ez bar)","skull crushers","skull crusher"], (t,c,W,H)=>{
+  const s=Math.sin(t*3),cy=H*.52,bA=Math.PI/2+s*.55;
+  c.fillStyle="#1e1e2a";c.fillRect(W/2-90,cy+20,180,15);
+  standing(c,W/2,cy-58,cy-58,cy+22,cy+78,cy+158);
+  const ex=W/2-52,ey=cy-22,bL=55;
+  limb(c,ex,ey,ex+Math.cos(bA)*bL,ey-Math.sin(bA)*bL,AC,7);
+  limb(c,W/2+52,ey,(W/2+52)+Math.cos(Math.PI-bA)*bL,ey-Math.sin(Math.PI-bA)*bL,AC,7);
+  bar(c,ex+Math.cos(bA)*bL-52,ey-Math.sin(bA)*bL-7,104,10);
+});
+
+reg(["close-grip bench press","close grip bench"], (t,c,W,H)=>{
+  const s=Math.sin(t*3),cy=H*.5,a=.45+s*.38;
+  c.fillStyle="#1e1e2a";c.fillRect(W/2-85,cy+30,170,16);
+  standing(c,W/2,cy-55,cy-55,cy+20,cy+80,cy+160);
+  const lx=W/2-28,rx=W/2+28,ay=cy-25;
+  limb(c,lx,ay,lx-20*Math.cos(a),ay-42*Math.sin(a),AC,7);
+  limb(c,rx,ay,rx+20*Math.cos(a),ay-42*Math.sin(a),AC,7);
+  bar(c,W/2-82,ay-42*Math.sin(a)-8,164,12);
+});
+
+reg(["tricep kickbacks (db)","tricep kickbacks","kickbacks"], (t,c,W,H)=>{
+  const s=(Math.sin(t*3)+1)/2,cy=H*.46;
+  const{sx,sy}=hinged(c,W/2,cy,.6);
+  const ang=s*1.3;
+  limb(c,sx+12,sy+8,W/2+38,cy+35,AC,7);
+  limb(c,W/2+38,cy+35,W/2+38+Math.cos(ang)*52,cy+35-Math.sin(ang)*8,AC,7);
+  db(c,W/2+38+Math.cos(ang)*52+2,cy+35-Math.sin(ang)*8-6);
+  gnd(c,W/2,cy+126);
+});
+
+reg(["bench dips"], (t,c,W,H)=>{
+  const s=Math.sin(t*2.5),cy=H*.44+((s+1)/2)*32;
+  c.fillStyle="#1e1e2a";c.fillRect(W/2-90,H*.3,180,16);
+  head(c,W/2,cy-95); limb(c,W/2,cy-78,W/2,cy-22,BC,10);
+  limb(c,W/2-42,cy-68,W/2-70,H*.3+16,AC,7);
+  limb(c,W/2+42,cy-68,W/2+70,H*.3+16,AC,7);
+  limb(c,W/2,cy-22,W/2-28,cy+55,BC,9); limb(c,W/2,cy-22,W/2+28,cy+55,BC,9);
+  limb(c,W/2-28,cy+55,W/2-22,cy+115,BC,8); limb(c,W/2+28,cy+55,W/2+22,cy+115,BC,8);
+  gnd(c,W/2,cy+120);
+});
+
+reg(["barbell back squat","back squat","squat","squats"], (t,c,W,H)=>{
+  const s=(Math.sin(t*2.5)+1)/2,hD=s*65,kF=s*18,cy=H*.35,hY=cy-hD*.15;
+  head(c,W/2,hY-80);
+  limb(c,W/2,hY-62,W/2,hY+hD*.2,BC,10);
+  limb(c,W/2,hY+hD*.2,W/2-40-kF,hY+hD*.2+62,BC,9);
+  limb(c,W/2,hY+hD*.2,W/2+40+kF,hY+hD*.2+62,BC,9);
+  limb(c,W/2-40-kF,hY+hD*.2+62,W/2-28,hY+hD*.2+130,BC,8);
+  limb(c,W/2+40+kF,hY+hD*.2+62,W/2+28,hY+hD*.2+130,BC,8);
+  joint(c,W/2-40-kF,hY+hD*.2+62); joint(c,W/2+40+kF,hY+hD*.2+62);
+  bar(c,W/2-80,hY-66,160,11);
+  limb(c,W/2-40,hY-58,W/2-78,hY-58,AC,6); limb(c,W/2+40,hY-58,W/2+78,hY-58,AC,6);
+  gnd(c,W/2,hY+hD*.2+136);
+});
+
+reg(["goblet squat"], (t,c,W,H)=>{
+  const s=(Math.sin(t*2.5)+1)/2,hD=s*65,kF=s*18,cy=H*.35,hY=cy-hD*.15;
+  head(c,W/2,hY-80);
+  limb(c,W/2,hY-62,W/2,hY+hD*.2,BC,10);
+  limb(c,W/2,hY+hD*.2,W/2-40-kF,hY+hD*.2+62,BC,9);
+  limb(c,W/2,hY+hD*.2,W/2+40+kF,hY+hD*.2+62,BC,9);
+  limb(c,W/2-40-kF,hY+hD*.2+62,W/2-28,hY+hD*.2+130,BC,8);
+  limb(c,W/2+40+kF,hY+hD*.2+62,W/2+28,hY+hD*.2+130,BC,8);
+  joint(c,W/2-40-kF,hY+hD*.2+62); joint(c,W/2+40+kF,hY+hD*.2+62);
+  limb(c,W/2-38,hY-50,W/2,hY-65,AC,7); limb(c,W/2+38,hY-50,W/2,hY-65,AC,7);
+  db(c,W/2-14,hY-76);
+  gnd(c,W/2,hY+hD*.2+136);
+});
+
+reg(["bulgarian split squats","split squats","split squat"], (t,c,W,H)=>{
+  const s=(Math.sin(t*2.5)+1)/2,hD=s*52,cy=H*.34,hY=cy;
+  head(c,W/2,hY-82); limb(c,W/2,hY-64,W/2,hY-10,BC,10);
+  limb(c,W/2,hY-10,W/2-30,hY+55,BC,9); limb(c,W/2-30,hY+55,W/2-18,hY+110,BC,8);
+  joint(c,W/2-30,hY+55);
+  limb(c,W/2,hY-10,W/2+40,hY+40+hD,BC,9); limb(c,W/2+40,hY+40+hD,W/2+30,hY+40+hD+50,BC,8);
+  joint(c,W/2+40,hY+40+hD);
+  c.fillStyle="#1e1e2a";c.fillRect(W/2+18,hY+98,50,14);
+  gnd(c,W/2-28,hY+116);
+});
+
+reg(["leg press"], (t,c,W,H)=>{
+  const s=Math.sin(t*2.5),cy=H*.5,lL=38+((s+1)/2)*42;
+  // lying figure
+  head(c,W/2-100,cy-3);
+  limb(c,W/2-80,cy,W/2+60,cy,BC,10);
+  limb(c,W/2+60,cy,W/2+95,cy+5,BC,9);
+  limb(c,W/2+30,cy-5,W/2+30,cy-5-lL,BC,9);
+  limb(c,W/2+60,cy-5,W/2+60,cy-5-lL,BC,9);
+  limb(c,W/2+30,cy-5-lL,W/2+20,cy-5-lL-22,BC,8);
+  limb(c,W/2+60,cy-5-lL,W/2+50,cy-5-lL-22,BC,8);
+  c.fillStyle="#1e1e2a";c.fillRect(W/2-10,cy-5-lL-30,80,24);
+});
+
+reg(["leg extensions","leg extension"], (t,c,W,H)=>{
+  const s=(Math.sin(t*3)+1)/2,cy=H*.44;
+  head(c,W/2,cy-65); limb(c,W/2,cy-48,W/2,cy,BC,10);
+  c.fillStyle="#1e1e2a";c.fillRect(W/2-55,cy,110,20);
+  limb(c,W/2-20,cy,W/2-20,cy+55,BC,9); limb(c,W/2+20,cy,W/2+20,cy+55,BC,9);
+  joint(c,W/2-20,cy+55); joint(c,W/2+20,cy+55);
+  const ext=s*60;
+  limb(c,W/2-20,cy+55,W/2-20+ext*.6,cy+55+ext,BC,8);
+  limb(c,W/2+20,cy+55,W/2+20+ext*.6,cy+55+ext,BC,8);
+  c.fillStyle="#666";c.fillRect(W/2-20+ext*.6-15,cy+55+ext,38,10);
+});
+
+reg(["lying leg curls","leg curl","leg curls"], (t,c,W,H)=>{
+  const s=(Math.sin(t*3)+1)/2,cy=H*.48;
+  head(c,W/2-100,cy-3);
+  limb(c,W/2-80,cy,W/2+60,cy,BC,10);
+  limb(c,W/2+60,cy,W/2+95,cy+5,BC,9);
+  const ang=s*1.25;
+  limb(c,W/2+30,cy+10,W/2+30-Math.sin(ang)*52,cy+10-Math.cos(ang)*52,BC,9);
+  limb(c,W/2+60,cy+10,W/2+60-Math.sin(ang)*52,cy+10-Math.cos(ang)*52,BC,9);
+  c.fillStyle="#7F77DD44";c.fillRect(W/2+30-Math.sin(ang)*52-10,cy+10-Math.cos(ang)*52-10,45,14);
+});
+
+reg(["romanian deadlift (rdl)","romanian deadlift","rdl"], (t,c,W,H)=>{
+  const s=(Math.sin(t*2.5)+1)/2,cy=H*.42,ang=s*.72;
+  const{sx,sy}=hinged(c,W/2,cy,ang);
+  const hY=cy+80*Math.sin(ang)+38;
+  limb(c,sx-12,sy+10,W/2-52,hY,AC,7); limb(c,sx+12,sy+10,W/2+52,hY,AC,7);
+  bar(c,W/2-80,hY-2,160,11); gnd(c,W/2,cy+125);
+});
+
+reg(["walking lunges","lunges","lunge"], (t,c,W,H)=>{
+  const s=(Math.sin(t*2)+1)/2,cy=H*.34,step=s*28;
+  head(c,W/2,cy-82); limb(c,W/2,cy-64,W/2,cy-12,BC,10);
+  limb(c,W/2,cy-12,W/2-30+step,cy+52,BC,9); limb(c,W/2-30+step,cy+52,W/2-18+step,cy+110,BC,8);
+  joint(c,W/2-30+step,cy+52);
+  limb(c,W/2,cy-12,W/2+38-step,cy+55+step*.3,BC,9); limb(c,W/2+38-step,cy+55+step*.3,W/2+28-step,cy+110,BC,8);
+  joint(c,W/2+38-step,cy+55+step*.3);
+  gnd(c,W/2,cy+114);
+});
+
+reg(["seated calf raises","standing calf raises","calf raises","calf raise"], (t,c,W,H)=>{
+  const s=Math.sin(t*3.5),rise=((s+1)/2)*26,cy=H*.30-rise;
+  standing(c,W/2,cy-82,cy-82,cy,cy+65,cy+130);
+  gnd(c,W/2,cy+135);
+  c.fillStyle="#7F77DD33";c.fillRect(W/2-40,cy+125,80,rise+8);
+});
+
+reg(["plank (standard)","plank"], (t,c,W,H)=>{
+  const wb=Math.sin(t*7)*2.5,cy=H*.52;
+  head(c,W/2-102,cy-4+wb*.3);
+  limb(c,W/2-84,cy+wb,W/2+62,cy+wb,BC,11);
+  limb(c,W/2-55,cy+wb,W/2-68,cy+42,AC,7); limb(c,W/2+22,cy+wb,W/2+35,cy+42,AC,7);
+  limb(c,W/2+62,cy+wb,W/2+82,cy+6,BC,9);
+  gnd(c,W/2,cy+46);
+});
+
+reg(["side plank"], (t,c,W,H)=>{
+  const wb=Math.sin(t*5)*3,cy=H*.5;
+  head(c,W/2-105,cy-30+wb);
+  limb(c,W/2-88,cy+wb,W/2+62,cy+wb,BC,11);
+  limb(c,W/2-18,cy+wb,W/2-6,cy+40,AC,8);
+  limb(c,W/2+62,cy+wb,W/2+80,cy+8,BC,9);
+  limb(c,W/2-88,cy+wb,W/2-110,cy-45+wb,AC,7);
+  gnd(c,W/2,cy+44);
+});
+
+reg(["hanging leg raises","hanging leg raise"], (t,c,W,H)=>{
+  const s=(Math.sin(t*2.5)+1)/2,cy=H*.22;
+  standing(c,W/2,cy+12,cy+12,cy+80,cy+145,cy+215);
+  limb(c,W/2-26,cy+80,W/2-26,cy+80+s*(-35)+35,BC,9);
+  limb(c,W/2+26,cy+80,W/2+26,cy+80+s*(-35)+35,BC,9);
+  limb(c,W/2-52,cy+16,W/2-72,cy,AC,7); limb(c,W/2+52,cy+16,W/2+72,cy,AC,7);
+  bar(c,W/2-90,cy-5,180,14);
+  c.strokeStyle="#555";c.lineWidth=4;
+  c.beginPath();c.moveTo(W/2-90,cy-5);c.lineTo(W/2-90,H*.02);c.stroke();
+  c.beginPath();c.moveTo(W/2+90,cy-5);c.lineTo(W/2+90,H*.02);c.stroke();
+});
+
+reg(["russian twists","russian twist"], (t,c,W,H)=>{
+  const s=Math.sin(t*3),cy=H*.52,twist=s*.5;
+  head(c,W/2+twist*30,cy-58);
+  limb(c,W/2+twist*30,cy-40,W/2,cy-5,BC,10);
+  limb(c,W/2,cy-5,W/2-32,cy+40,BC,9); limb(c,W/2,cy-5,W/2+32,cy+40,BC,9);
+  limb(c,W/2-32,cy+40,W/2-38,cy+90,BC,8); limb(c,W/2+32,cy+40,W/2+38,cy+90,BC,8);
+  limb(c,W/2+twist*30,cy-40,W/2+twist*65,cy-38,AC,7);
+  c.fillStyle="#666";c.beginPath();c.arc(W/2+twist*65,cy-38,10,0,Math.PI*2);c.fill();
+  gnd(c,W/2,cy+95);
+});
+
+reg(["treadmill run (sprints)","treadmill run","running","sprints"], (t,c,W,H)=>{
+  const cy=H*.36,lA=Math.sin(t*4.2)*.72,aA=Math.sin(t*4.2+Math.PI)*.52;
+  head(c,W/2,cy-82); limb(c,W/2,cy-64,W/2,cy,BC,10);
+  limb(c,W/2-38,cy-42,W/2-38-Math.cos(aA)*46,cy-42-Math.sin(aA)*38,AC,7);
+  limb(c,W/2+38,cy-42,W/2+38+Math.cos(-aA)*46,cy-42-Math.sin(-aA)*38,AC,7);
+  const lKx=W/2-24+Math.sin(lA)*40,lKy=cy+60-Math.abs(Math.cos(lA))*20;
+  limb(c,W/2-24,cy,lKx,lKy,BC,9); limb(c,lKx,lKy,lKx+Math.sin(lA)*18,lKy+50,BC,8); joint(c,lKx,lKy);
+  const rKx=W/2+24+Math.sin(-lA)*40,rKy=cy+60-Math.abs(Math.cos(lA))*20;
+  limb(c,W/2+24,cy,rKx,rKy,BC,9); limb(c,rKx,rKy,rKx+Math.sin(-lA)*18,rKy+50,BC,8); joint(c,rKx,rKy);
+  gnd(c,W/2,cy+114);
+});
+
+/* ── NEW EXERCISES ── */
+
+reg(["preacher curl","preacher curls","preacher curl (ez bar)"], (t,c,W,H)=>{
+  const s=Math.sin(t*3),cy=H*.46,ang=.3+((s+1)/2)*.95;
+  c.fillStyle="#1e1e2a";c.fillRect(W/2-60,cy-20,120,60);
+  head(c,W/2,cy-62); limb(c,W/2,cy-44,W/2,cy-20,BC,10);
+  limb(c,W/2-34,cy-20,W/2-34,cy,BC,7); limb(c,W/2+34,cy-20,W/2+34,cy,BC,7);
+  const lhx=W/2-34-Math.cos(ang)*52,lhy=cy-Math.sin(ang)*52;
+  const rhx=W/2+34+Math.cos(ang)*52,rhy=cy-Math.sin(ang)*52;
+  limb(c,W/2-34,cy,lhx,lhy,AC,7); limb(c,W/2+34,cy,rhx,rhy,AC,7);
+  bar(c,lhx-14,lhy-6,28+Math.cos(ang)*44,9);
+});
+
+reg(["dumbbell curl","dumbbell curls"], (t,c,W,H)=>{
+  const s=Math.sin(t*3),cy=H*.41,ang=.2+((s+1)/2)*1.15;
+  standing(c,W/2,cy-80,cy-80,cy,cy+60,cy+140);
+  const ey=cy+14;
+  limb(c,W/2-34,ey,(W/2-34)-Math.cos(ang)*55,ey-Math.sin(ang)*55,AC,7);
+  limb(c,W/2+34,ey,(W/2+34)+Math.cos(ang)*55,ey-Math.sin(ang)*55,AC,7);
+  db(c,(W/2-34)-Math.cos(ang)*55-14,ey-Math.sin(ang)*55-6);
+  db(c,(W/2+34)+Math.cos(ang)*55+2,ey-Math.sin(ang)*55-6);
+});
+
+reg(["21s","21s (bicep curls)"], (t,c,W,H)=>{
+  const phase=Math.floor((t*.8)%3);
+  const s=Math.sin(t*3),cy=H*.41;
+  const baseAng= phase===0?.2: phase===1?.75:(.2+((s+1)/2)*1.1);
+  const ang=phase===2?(.2+((s+1)/2)*1.1):baseAng+((s+1)/2)*.55;
+  standing(c,W/2,cy-80,cy-80,cy,cy+60,cy+140);
+  const ey=cy+14;
+  limb(c,W/2-34,ey,(W/2-34)-Math.cos(ang)*55,ey-Math.sin(ang)*55,AC,7);
+  limb(c,W/2+34,ey,(W/2+34)+Math.cos(ang)*55,ey-Math.sin(ang)*55,AC,7);
+  db(c,(W/2-34)-Math.cos(ang)*55-14,ey-Math.sin(ang)*55-6);
+  db(c,(W/2+34)+Math.cos(ang)*55+2,ey-Math.sin(ang)*55-6);
+  c.fillStyle=AC+"88";c.font="bold 11px sans-serif";c.fillText("21s",W/2-10,cy-92);
+});
+
+reg(["tricep dips","triceps dips"], (t,c,W,H)=>{
+  const s=Math.sin(t*2.5),cy=H*.44+((s+1)/2)*32;
+  c.fillStyle="#1e1e2a";c.fillRect(W/2-90,H*.3,180,16);
+  head(c,W/2,cy-95); limb(c,W/2,cy-78,W/2,cy-22,BC,10);
+  limb(c,W/2-42,cy-68,W/2-70,H*.3+16,AC,7);
+  limb(c,W/2+42,cy-68,W/2+70,H*.3+16,AC,7);
+  limb(c,W/2,cy-22,W/2-28,cy+55,BC,9); limb(c,W/2,cy-22,W/2+28,cy+55,BC,9);
+  limb(c,W/2-28,cy+55,W/2-22,cy+115,BC,8); limb(c,W/2+28,cy+55,W/2+22,cy+115,BC,8);
+  gnd(c,W/2,cy+120);
+});
+
+reg(["skull crushers","skull crusher"], (t,c,W,H)=>{
+  const s=Math.sin(t*3),cy=H*.52,bA=Math.PI/2+s*.55;
+  c.fillStyle="#1e1e2a";c.fillRect(W/2-90,cy+20,180,15);
+  standing(c,W/2,cy-58,cy-58,cy+22,cy+78,cy+158);
+  const ex=W/2-52,ey=cy-22,bL=55;
+  limb(c,ex,ey,ex+Math.cos(bA)*bL,ey-Math.sin(bA)*bL,AC,7);
+  limb(c,W/2+52,ey,(W/2+52)+Math.cos(Math.PI-bA)*bL,ey-Math.sin(Math.PI-bA)*bL,AC,7);
+  bar(c,ex+Math.cos(bA)*bL-52,ey-Math.sin(bA)*bL-7,104,10);
+});
+
+reg(["kickbacks","tricep kickbacks","dumbbell kickbacks"], (t,c,W,H)=>{
+  const s=(Math.sin(t*3)+1)/2,cy=H*.46;
+  const{sx,sy}=hinged(c,W/2,cy,.6);
+  const ang=s*1.3;
+  limb(c,sx+12,sy+8,W/2+38,cy+35,AC,7);
+  limb(c,W/2+38,cy+35,W/2+38+Math.cos(ang)*52,cy+35-Math.sin(ang)*8,AC,7);
+  db(c,W/2+38+Math.cos(ang)*52+2,cy+35-Math.sin(ang)*8-6);
+  gnd(c,W/2,cy+126);
+});
+
+reg(["barbell squat (back)","barbell squat","back squat","squat"], (t,c,W,H)=>{
+  const s=(Math.sin(t*2.5)+1)/2,hD=s*65,kF=s*18,cy=H*.35,hY=cy-hD*.15;
+  head(c,W/2,hY-80);
+  limb(c,W/2,hY-62,W/2,hY+hD*.2,BC,10);
+  limb(c,W/2,hY+hD*.2,W/2-40-kF,hY+hD*.2+62,BC,9);
+  limb(c,W/2,hY+hD*.2,W/2+40+kF,hY+hD*.2+62,BC,9);
+  limb(c,W/2-40-kF,hY+hD*.2+62,W/2-28,hY+hD*.2+130,BC,8);
+  limb(c,W/2+40+kF,hY+hD*.2+62,W/2+28,hY+hD*.2+130,BC,8);
+  joint(c,W/2-40-kF,hY+hD*.2+62); joint(c,W/2+40+kF,hY+hD*.2+62);
+  bar(c,W/2-80,hY-66,160,11);
+  limb(c,W/2-40,hY-58,W/2-78,hY-58,AC,6); limb(c,W/2+40,hY-58,W/2+78,hY-58,AC,6);
+  gnd(c,W/2,hY+hD*.2+136);
+});
+
+reg(["battle ropes","battle rope"], (t,c,W,H)=>{
+  const cy=H*.42,s1=Math.sin(t*6),s2=Math.sin(t*6+Math.PI);
+  standing(c,W/2,cy-80,cy-80,cy,cy+60,cy+140);
+  // left rope wave
+  for(let i=0;i<6;i++){
+    const x=W/2-40-(i*28),y=cy-10+Math.sin(t*6+i*.8)*18*(i%2?1:-1);
+    const nx=x-28,ny=cy-10+Math.sin(t*6+(i+1)*.8)*18*((i+1)%2?1:-1);
+    limb(c,x,y,nx,ny,AC,4);
+  }
+  // right rope wave
+  for(let i=0;i<6;i++){
+    const x=W/2+40+(i*28),y=cy-10+Math.sin(t*6+Math.PI+i*.8)*18*(i%2?1:-1);
+    const nx=x+28,ny=cy-10+Math.sin(t*6+Math.PI+(i+1)*.8)*18*((i+1)%2?1:-1);
+    limb(c,x,y,nx,ny,AC,4);
+  }
+  limb(c,W/2-38,cy-18,W/2-40,cy-10,AC,6);
+  limb(c,W/2+38,cy-18,W/2+40,cy-10,AC,6);
+  c.fillStyle="#55556088";c.fillRect(0,cy-2+s1*4,12,8);c.fillRect(W-12,cy-2+s2*4,12,8);
+});
+
+reg(["bench press (barbell)","bench press"], (t,c,W,H)=>{
+  const s=Math.sin(t*3),cy=H*.5,a=.45+s*.38;
+  c.fillStyle="#1e1e2a";c.fillRect(W/2-85,cy+30,170,16);
+  standing(c,W/2,cy-55,cy-55,cy+20,cy+80,cy+160);
+  const lx=W/2-52,rx=W/2+52,ay=cy-25;
+  limb(c,lx,ay,lx-32*Math.cos(a),ay-42*Math.sin(a),AC,7);
+  limb(c,rx,ay,rx+32*Math.cos(a),ay-42*Math.sin(a),AC,7);
+  bar(c,W/2-90,ay-42*Math.sin(a)-8,180,12);
+});
+
+reg(["bench press (dumbbell)"], (t,c,W,H)=>{
+  const s=Math.sin(t*3),cy=H*.5,a=.45+s*.4;
+  c.fillStyle="#1e1e2a";c.fillRect(W/2-85,cy+30,170,16);
+  standing(c,W/2,cy-55,cy-55,cy+20,cy+80,cy+160);
+  const lx=W/2-52,rx=W/2+52,ay=cy-25;
+  const lhx=lx-32*Math.cos(a),lhy=ay-42*Math.sin(a);
+  const rhx=rx+32*Math.cos(a),rhy=ay-42*Math.sin(a);
+  limb(c,lx,ay,lhx,lhy,AC,7); limb(c,rx,ay,rhx,rhy,AC,7);
+  db(c,lhx-14,lhy-6); db(c,rhx+2,rhy-6);
+});
+
+reg(["incline bench press"], (t,c,W,H)=>{
+  const s=Math.sin(t*3),cy=H*.5,a=.52+s*.32;
+  c.fillStyle="#1e1e2a";c.fillRect(W/2-70,cy+20,140,14);c.fillRect(W/2-50,cy-40,100,70);
+  standing(c,W/2,cy-55,cy-55,cy+18,cy+70,cy+145);
+  const lx=W/2-50,rx=W/2+50,ay=cy-45;
+  limb(c,lx,ay,lx-30*Math.cos(a),ay-50*Math.sin(a),AC,7);
+  limb(c,rx,ay,rx+30*Math.cos(a),ay-50*Math.sin(a),AC,7);
+  bar(c,W/2-80,ay-50*Math.sin(a)-8,160,12);
+});
+
+reg(["dips"], (t,c,W,H)=>{
+  const s=Math.sin(t*2.5),cy=H*.42+((s+1)/2)*38;
+  head(c,W/2,cy-110);
+  limb(c,W/2,cy-92,W/2,cy-15,BC,10);
+  limb(c,W/2-50,cy-82,W/2-50,cy+8,BC,9); limb(c,W/2+50,cy-82,W/2+50,cy+8,BC,9);
+  limb(c,W/2-50,cy-82,W/2,cy-82,BC,6); limb(c,W/2+50,cy-82,W/2,cy-82,BC,6);
+  c.fillStyle="#444";c.fillRect(W/2-64,cy-88,12,100);c.fillRect(W/2+52,cy-88,12,100);
+  limb(c,W/2,cy-15,W/2-28,cy+65,BC,9); limb(c,W/2,cy-15,W/2+28,cy+65,BC,9);
+  limb(c,W/2-28,cy+65,W/2-22,cy+125,BC,8); limb(c,W/2+28,cy+65,W/2+22,cy+125,BC,8);
+  joint(c,W/2-28,cy+65); joint(c,W/2+28,cy+65);
+  gnd(c,W/2,cy+130);
+});
+
+reg(["chest press machine","chest press"], (t,c,W,H)=>{
+  const s=Math.sin(t*3),cy=H*.5,a=.45+s*.38;
+  c.fillStyle="#1e1e2a";c.fillRect(W/2-110,cy-95,220,190);
+  standing(c,W/2,cy-55,cy-55,cy+20,cy+80,cy+160);
+  const lx=W/2-52,rx=W/2+52,ay=cy-22;
+  limb(c,lx,ay,lx-34*Math.cos(a),ay-38*Math.sin(a),AC,7);
+  limb(c,rx,ay,rx+34*Math.cos(a),ay-38*Math.sin(a),AC,7);
+  c.fillStyle="#3a3a4a";c.fillRect(lx-34*Math.cos(a)-10,ay-38*Math.sin(a)-8,14,16);
+  c.fillRect(rx+34*Math.cos(a)-4,ay-38*Math.sin(a)-8,14,16);
+});
+
+reg(["decline bench press"], (t,c,W,H)=>{
+  const s=Math.sin(t*3),cy=H*.52,a=.45+s*.38;
+  c.fillStyle="#1e1e2a";c.fillRect(W/2-85,cy+25,170,16);
+  standing(c,W/2,cy-52,cy-52,cy+22,cy+80,cy+155);
+  const lx=W/2-52,rx=W/2+52,ay=cy-18;
+  limb(c,lx,ay,lx-30*Math.cos(a),ay-38*Math.sin(a),AC,7);
+  limb(c,rx,ay,rx+30*Math.cos(a),ay-38*Math.sin(a),AC,7);
+  bar(c,W/2-88,ay-38*Math.sin(a)-8,176,12);
+});
+
+reg(["push-ups","pushups","push ups"], (t,c,W,H)=>{
+  const s=Math.sin(t*3),cy=H*.52+s*20;
+  head(c,W/2-100,cy-5);
+  limb(c,W/2-82,cy,W/2+65,cy,BC,10);
+  limb(c,W/2-42,cy-5,W/2-80,cy+28-s*18,AC,7);
+  limb(c,W/2+42,cy-5,W/2+80,cy+28-s*18,AC,7);
+  limb(c,W/2+65,cy,W/2+95,cy+6,BC,9);
+  gnd(c,W/2,cy+35);
+});
+
+reg(["cable flyes","cable fly","cable flyes (low-to-high)","cable flyes (high-to-low)"], (t,c,W,H)=>{
+  const s=Math.sin(t*2.5),cy=H*.44,sp=58+s*45;
+  standing(c,W/2,cy-68,cy-68,cy+12,cy+72,cy+152);
+  const sy2=cy-18;
+  cable(c,10,20,W/2-sp,sy2+s*18); cable(c,W-10,20,W/2+sp,sy2+s*18);
+  limb(c,W/2,sy2,W/2-sp,sy2+s*18,AC,7); limb(c,W/2,sy2,W/2+sp,sy2+s*18,AC,7);
+  c.fillStyle=BC;c.beginPath();c.arc(W/2-sp,sy2+s*18,6,0,Math.PI*2);c.fill();
+  c.beginPath();c.arc(W/2+sp,sy2+s*18,6,0,Math.PI*2);c.fill();
+});
+
+reg(["cable crossover","cable crossovers"], (t,c,W,H)=>{
+  const s=Math.sin(t*2.5),cy=H*.44,sp=55+s*48;
+  standing(c,W/2,cy-68,cy-68,cy+12,cy+72,cy+152);
+  cable(c,0,H*.15,W/2-sp,cy-18+s*20); cable(c,W,H*.15,W/2+sp,cy-18+s*20);
+  limb(c,W/2,cy-18,W/2-sp,cy-18+s*20,AC,7); limb(c,W/2,cy-18,W/2+sp,cy-18+s*20,AC,7);
+  c.fillStyle=BC;c.beginPath();c.arc(W/2-sp,cy-18+s*20,6,0,Math.PI*2);c.fill();
+  c.beginPath();c.arc(W/2+sp,cy-18+s*20,6,0,Math.PI*2);c.fill();
+});
+
+reg(["dumbbell flyes","dumbbell fly","db flyes"], (t,c,W,H)=>{
+  const s=Math.sin(t*3),cy=H*.5,a=.35+s*.55;
+  c.fillStyle="#1e1e2a";c.fillRect(W/2-85,cy+30,170,16);
+  standing(c,W/2,cy-55,cy-55,cy+20,cy+80,cy+160);
+  const lx=W/2-52,rx=W/2+52,ay=cy-22;
+  limb(c,lx,ay,lx-44*Math.cos(a),ay-28*Math.sin(a),AC,7);
+  limb(c,rx,ay,rx+44*Math.cos(a),ay-28*Math.sin(a),AC,7);
+  db(c,lx-44*Math.cos(a)-14,ay-28*Math.sin(a)-6);
+  db(c,rx+44*Math.cos(a)+2,ay-28*Math.sin(a)-6);
+});
+
+reg(["pull-ups","pullups","pull ups"], (t,c,W,H)=>{
+  const s=Math.sin(t*2.5),bY=H*.52+s*42;
+  standing(c,W/2,bY-68,bY-68,bY+10,bY+72,bY+152);
+  limb(c,W/2-52,bY-48,W/2-78,H*.14,AC,7); limb(c,W/2+52,bY-48,W/2+78,H*.14,AC,7);
+  bar(c,W/2-100,H*.10,200,14);
+  c.strokeStyle="#555";c.lineWidth=4;
+  c.beginPath();c.moveTo(W/2-100,H*.10);c.lineTo(W/2-100,H*.02);c.stroke();
+  c.beginPath();c.moveTo(W/2+100,H*.10);c.lineTo(W/2+100,H*.02);c.stroke();
+});
+
+reg(["lat pulldown (narrow grip)","lat pulldown (close grip)","narrow grip pulldown"], (t,c,W,H)=>{
+  const s=Math.sin(t*2.5),cy=H*.44,bY=H*.08+((s+1)/2)*62;
+  standing(c,W/2,cy-74,cy-74,cy+6,cy+66,cy+146);
+  limb(c,W/2-30,cy-38,W/2-35,bY+8,AC,7); limb(c,W/2+30,cy-38,W/2+35,bY+8,AC,7);
+  c.fillStyle="#666";c.beginPath();
+  c.moveTo(W/2-35,bY+8);c.lineTo(W/2+35,bY+8);c.lineTo(W/2,bY+28);c.closePath();c.fill();
+  cable(c,W/2,H*.01,W/2,bY);
+});
+
+reg(["chin-ups","chinups","chin ups"], (t,c,W,H)=>{
+  const s=Math.sin(t*2.5),bY=H*.52+s*42;
+  standing(c,W/2,bY-68,bY-68,bY+10,bY+72,bY+152);
+  limb(c,W/2-44,bY-48,W/2-62,H*.14,AC,7); limb(c,W/2+44,bY-48,W/2+62,H*.14,AC,7);
+  bar(c,W/2-72,H*.10,144,14);
+  c.strokeStyle="#555";c.lineWidth=4;
+  c.beginPath();c.moveTo(W/2-72,H*.10);c.lineTo(W/2-72,H*.02);c.stroke();
+  c.beginPath();c.moveTo(W/2+72,H*.10);c.lineTo(W/2+72,H*.02);c.stroke();
+});
+
+reg(["lat pulldown (wide grip)","lat pulldown (wide)","wide grip pulldown"], (t,c,W,H)=>{
+  const s=Math.sin(t*2.5),cy=H*.44,bY=H*.08+((s+1)/2)*62;
+  standing(c,W/2,cy-74,cy-74,cy+6,cy+66,cy+146);
+  limb(c,W/2-52,cy-38,W/2-80,bY+8,AC,7); limb(c,W/2+52,cy-38,W/2+80,bY+8,AC,7);
+  bar(c,W/2-86,bY,172,10); cable(c,W/2,H*.01,W/2,bY);
+});
+
+reg(["chest-supported row","chest supported row"], (t,c,W,H)=>{
+  const s=Math.sin(t*3),cy=H*.46;
+  c.fillStyle="#1e1e2a";c.fillRect(W/2-60,cy-40,120,80);
+  head(c,W/2-8,cy-52); limb(c,W/2-8,cy-35,W/2-8,cy-5,BC,10);
+  const pull=s*32;
+  limb(c,W/2-38,cy-18,W/2-52,cy-18+pull*.4,AC,7);
+  limb(c,W/2+22,cy-18,W/2+36,cy-18+pull*.4,AC,7);
+  db(c,W/2-66,cy-20+pull*.4); db(c,W/2+36,cy-20+pull*.4);
+});
+
+reg(["t-bar row","t bar row"], (t,c,W,H)=>{
+  const s=Math.sin(t*3),cy=H*.46;
+  const{sx,sy}=hinged(c,W/2,cy,.55);
+  const hY=cy+50-s*30;
+  limb(c,sx-12,sy+12,W/2-40,hY,AC,7); limb(c,sx+12,sy+12,W/2+40,hY,AC,7);
+  c.fillStyle="#666";c.fillRect(W/2-44,hY,88,10);
+  c.fillStyle="#555";c.fillRect(W/2-20,hY-20,40,22);
+  gnd(c,W/2,cy+125);
+});
+
+reg(["deadlift"], (t,c,W,H)=>{
+  const s=(Math.sin(t*2)+1)/2,ang=(1-s)*.78,cy=H*(.56-s*.16);
+  const{sx,sy}=hinged(c,W/2,cy,ang);
+  const hY=cy+70*Math.sin(ang)+(1-s)*42;
+  limb(c,sx-14,sy+8,W/2-52,hY,AC,7); limb(c,sx+14,sy+8,W/2+52,hY,AC,7);
+  bar(c,W/2-90,hY-2,180,12); gnd(c,W/2,cy+126);
+});
+
+reg(["rack pulls","rack pull"], (t,c,W,H)=>{
+  const s=(Math.sin(t*2)+1)/2,ang=(1-s)*.45,cy=H*(.52-s*.1);
+  c.fillStyle="#1e1e2a";c.fillRect(W/2-95,cy+80,190,16);
+  c.fillRect(W/2-95,cy+40,14,44); c.fillRect(W/2+81,cy+40,14,44);
+  const{sx,sy}=hinged(c,W/2,cy,ang);
+  const hY=cy+50*Math.sin(ang)+(1-s)*28;
+  limb(c,sx-14,sy+8,W/2-52,hY,AC,7); limb(c,sx+14,sy+8,W/2+52,hY,AC,7);
+  bar(c,W/2-90,hY-2,180,12);
+});
+
+reg(["overhead press (military press)","military press","overhead press","ohp"], (t,c,W,H)=>{
+  const s=Math.sin(t*2.5),cy=H*.41,bY=cy-82-((s+1)/2)*58;
+  standing(c,W/2,cy-82,cy-82,cy,cy+60,cy+140);
+  limb(c,W/2-52,cy-30,W/2-64,bY+8,AC,7); limb(c,W/2+52,cy-30,W/2+64,bY+8,AC,7);
+  bar(c,W/2-80,bY,160,11);
+});
+
+reg(["push press"], (t,c,W,H)=>{
+  const s=(Math.sin(t*2.5)+1)/2,cy=H*.41,bY=cy-82-s*72;
+  const dip=Math.max(0,Math.sin(t*2.5+Math.PI))*14;
+  standing(c,W/2,cy-82+dip,cy-82+dip,cy+dip,cy+60+dip,cy+140);
+  limb(c,W/2-52,cy-30+dip,W/2-64,bY+8,AC,7); limb(c,W/2+52,cy-30+dip,W/2+64,bY+8,AC,7);
+  bar(c,W/2-80,bY,160,11);
+});
+
+reg(["front raise","front raises"], (t,c,W,H)=>{
+  const s=(Math.sin(t*2.5)+1)/2,cy=H*.41,lift=s*85;
+  standing(c,W/2,cy-82,cy-82,cy,cy+60,cy+140);
+  limb(c,W/2-36,cy-10,W/2-55,cy-10-lift,AC,7);
+  limb(c,W/2+36,cy-10,W/2+55,cy-10-lift,AC,7);
+  db(c,W/2-68,cy-10-lift-5); db(c,W/2+55,cy-10-lift-5);
+});
+
+reg(["face pulls","face pull"], (t,c,W,H)=>{
+  const s=Math.sin(t*2.5),cy=H*.41,px=52+s*32;
+  standing(c,W/2,cy-82,cy-82,cy,cy+60,cy+140);
+  const hy=cy-55-s*10;
+  limb(c,W/2-36,cy-20,W/2-px,hy,AC,7); limb(c,W/2+36,cy-20,W/2+px,hy,AC,7);
+  cable(c,W+10,cy-60,W/2+px,hy); cable(c,W+10,cy-60,W/2-px,hy);
+});
+
+reg(["rear delt fly","rear delt flyes","dumbbell rear delt fly"], (t,c,W,H)=>{
+  const s=Math.sin(t*2.5),cy=H*.44,sp=52+s*48;
+  const{sx,sy}=hinged(c,W/2,cy,.58);
+  limb(c,sx-12,sy+8,W/2-sp,cy-18-s*16,AC,7);
+  limb(c,sx+12,sy+8,W/2+sp,cy-18-s*16,AC,7);
+  db(c,W/2-sp-14,cy-22-s*16); db(c,W/2+sp+2,cy-22-s*16);
+  gnd(c,W/2,cy+125);
+});
+
+reg(["lateral raise","lateral raises","side raise"], (t,c,W,H)=>{
+  const s=(Math.sin(t*2.5)+1)/2,cy=H*.41,sp=s*82;
+  standing(c,W/2,cy-82,cy-82,cy,cy+60,cy+140);
+  limb(c,W/2-38,cy-14,W/2-38-sp,cy-14-sp*.42,AC,7);
+  limb(c,W/2+38,cy-14,W/2+38+sp,cy-14-sp*.42,AC,7);
+  db(c,W/2-38-sp-14,cy-14-sp*.42-5); db(c,W/2+38+sp+2,cy-14-sp*.42-5);
+});
+
+reg(["reverse pec deck","reverse pec deck (rear delt)"], (t,c,W,H)=>{
+  const s=Math.sin(t*2.5),cy=H*.44,sp=52+s*48;
+  c.fillStyle="#1e1e2a";c.fillRect(W/2-110,cy-95,220,190);
+  standing(c,W/2,cy-74,cy-74,cy+6,cy+66,cy+146);
+  limb(c,W/2-38,cy-22,W/2-sp,cy-22-s*16,AC,7);
+  limb(c,W/2+38,cy-22,W/2+sp,cy-22-s*16,AC,7);
+  c.fillStyle="#3a3a4a";c.fillRect(W/2-sp-8,cy-35-s*16,14,22);
+  c.fillRect(W/2+sp-6,cy-35-s*16,14,22);
+});
+
+reg(["hack squat"], (t,c,W,H)=>{
+  const s=(Math.sin(t*2.5)+1)/2,hD=s*62,kF=s*16,cy=H*.35,hY=cy-hD*.12;
+  c.fillStyle="#1e1e2a";c.fillRect(W/2-75,hY+hD*.2+100,150,18);c.fillRect(W/2-80,hY-80,160,14);
+  head(c,W/2,hY-82);
+  limb(c,W/2,hY-64,W/2,hY+hD*.2,BC,10);
+  limb(c,W/2,hY+hD*.2,W/2-40-kF,hY+hD*.2+62,BC,9);
+  limb(c,W/2,hY+hD*.2,W/2+40+kF,hY+hD*.2+62,BC,9);
+  limb(c,W/2-40-kF,hY+hD*.2+62,W/2-28,hY+hD*.2+120,BC,8);
+  limb(c,W/2+40+kF,hY+hD*.2+62,W/2+28,hY+hD*.2+120,BC,8);
+  joint(c,W/2-40-kF,hY+hD*.2+62); joint(c,W/2+40+kF,hY+hD*.2+62);
+  gnd(c,W/2,hY+hD*.2+126);
+});
+
+reg(["barbell squat (front)","front squat"], (t,c,W,H)=>{
+  const s=(Math.sin(t*2.5)+1)/2,hD=s*65,kF=s*18,cy=H*.35,hY=cy-hD*.15;
+  head(c,W/2,hY-80);
+  limb(c,W/2,hY-62,W/2,hY+hD*.2,BC,10);
+  limb(c,W/2,hY+hD*.2,W/2-40-kF,hY+hD*.2+62,BC,9);
+  limb(c,W/2,hY+hD*.2,W/2+40+kF,hY+hD*.2+62,BC,9);
+  limb(c,W/2-40-kF,hY+hD*.2+62,W/2-28,hY+hD*.2+130,BC,8);
+  limb(c,W/2+40+kF,hY+hD*.2+62,W/2+28,hY+hD*.2+130,BC,8);
+  joint(c,W/2-40-kF,hY+hD*.2+62); joint(c,W/2+40+kF,hY+hD*.2+62);
+  // front rack bar position
+  limb(c,W/2-52,hY-58,W/2+52,hY-58,AC,7);
+  bar(c,W/2-52,hY-63,104,9);
+  gnd(c,W/2,hY+hD*.2+136);
+});
+
+reg(["leg curls (seated)","seated leg curls"], (t,c,W,H)=>{
+  const s=(Math.sin(t*3)+1)/2,cy=H*.44;
+  head(c,W/2,cy-65); limb(c,W/2,cy-48,W/2,cy,BC,10);
+  c.fillStyle="#1e1e2a";c.fillRect(W/2-60,cy,120,20);
+  limb(c,W/2-20,cy,W/2-20,cy+55,BC,9); limb(c,W/2+20,cy,W/2+20,cy+55,BC,9);
+  joint(c,W/2-20,cy+55); joint(c,W/2+20,cy+55);
+  const curl=s*55;
+  limb(c,W/2-20,cy+55,W/2-20-curl*.5,cy+55+curl*.6,BC,8);
+  limb(c,W/2+20,cy+55,W/2+20-curl*.5,cy+55+curl*.6,BC,8);
+  c.fillStyle="#666";c.fillRect(W/2-20-curl*.5-14,cy+55+curl*.6,38,10);
+});
+
+reg(["kettlebell swings","kettlebell swing"], (t,c,W,H)=>{
+  const s=Math.sin(t*2.8),cy=H*.45,ang=s*.65;
+  const{sx,sy}=hinged(c,W/2,cy,Math.abs(ang)*.4);
+  // KB swing arc
+  const kbx=W/2+Math.sin(ang)*80,kby=cy-20-Math.cos(ang)*60;
+  limb(c,sx-10,sy+10,kbx,kby,AC,6); limb(c,sx+10,sy+10,kbx,kby,AC,6);
+  c.fillStyle="#555";c.fillRect(kbx-10,kby-10,20,16);
+  c.fillStyle="#444";c.beginPath();c.arc(kbx,kby-10,8,Math.PI,0);c.stroke();
+  gnd(c,W/2,cy+125);
+});
+
+reg(["stiff-leg deadlift","stiff leg deadlift","sldl"], (t,c,W,H)=>{
+  const s=(Math.sin(t*2.5)+1)/2,cy=H*.42,ang=s*.65;
+  const{sx,sy}=hinged(c,W/2,cy,ang);
+  const hY=cy+75*Math.sin(ang)+30;
+  limb(c,sx-12,sy+10,W/2-52,hY,AC,7); limb(c,sx+12,sy+10,W/2+52,hY,AC,7);
+  bar(c,W/2-80,hY-2,160,11); gnd(c,W/2,cy+125);
+});
+
+reg(["hip thrusts","hip thrust"], (t,c,W,H)=>{
+  const s=(Math.sin(t*3)+1)/2,cy=H*.56,lift=s*42;
+  c.fillStyle="#1e1e2a";c.fillRect(W/2-90,cy-lift-10,180,16);
+  // torso leans on bench
+  head(c,W/2-62,cy-lift-28);
+  limb(c,W/2-62,cy-lift-12,W/2,cy-lift+8,BC,10);
+  // hips lift
+  limb(c,W/2,cy-lift+8,W/2-28,cy+52,BC,9); limb(c,W/2,cy-lift+8,W/2+28,cy+52,BC,9);
+  limb(c,W/2-28,cy+52,W/2-22,cy+100,BC,8); limb(c,W/2+28,cy+52,W/2+22,cy+100,BC,8);
+  joint(c,W/2-28,cy+52); joint(c,W/2+28,cy+52);
+  bar(c,W/2-70,cy-lift+2,140,11);
+  gnd(c,W/2,cy+104);
+});
+
+reg(["leg curls (lying)","lying leg curls"], (t,c,W,H)=>{
+  const s=(Math.sin(t*3)+1)/2,cy=H*.48;
+  head(c,W/2-100,cy-3);
+  limb(c,W/2-80,cy,W/2+60,cy,BC,10);
+  limb(c,W/2+60,cy,W/2+95,cy+5,BC,9);
+  const ang=s*1.25;
+  limb(c,W/2+30,cy+10,W/2+30-Math.sin(ang)*52,cy+10-Math.cos(ang)*52,BC,9);
+  limb(c,W/2+60,cy+10,W/2+60-Math.sin(ang)*52,cy+10-Math.cos(ang)*52,BC,9);
+  c.fillStyle="#7F77DD44";c.fillRect(W/2+30-Math.sin(ang)*52-10,cy+10-Math.cos(ang)*52-10,45,14);
+});
+
+reg(["glute bridges","glute bridge"], (t,c,W,H)=>{
+  const s=(Math.sin(t*3)+1)/2,cy=H*.6,lift=s*38;
+  head(c,W/2-80,cy-8);
+  limb(c,W/2-80,cy+8,W/2,cy+8,BC,10);
+  limb(c,W/2,cy+8-lift,W/2-30,cy+55-lift*.3,BC,9); limb(c,W/2,cy+8-lift,W/2+30,cy+55-lift*.3,BC,9);
+  limb(c,W/2-30,cy+55-lift*.3,W/2-22,cy+100,BC,8); limb(c,W/2+30,cy+55-lift*.3,W/2+22,cy+100,BC,8);
+  joint(c,W/2-30,cy+55-lift*.3); joint(c,W/2+30,cy+55-lift*.3);
+  gnd(c,W/2,cy+104);
+});
+
+reg(["standing calf raise","standing calf raises","calf raise"], (t,c,W,H)=>{
+  const s=Math.sin(t*3.5),rise=((s+1)/2)*26,cy=H*.30-rise;
+  standing(c,W/2,cy-82,cy-82,cy,cy+65,cy+130);
+  gnd(c,W/2,cy+135);
+  c.fillStyle="#7F77DD33";c.fillRect(W/2-40,cy+125,80,rise+8);
+});
+
+reg(["seated calf raise","seated calf raises"], (t,c,W,H)=>{
+  const s=Math.sin(t*3.5),rise=((s+1)/2)*22,cy=H*.44;
+  head(c,W/2,cy-65); limb(c,W/2,cy-48,W/2,cy,BC,10);
+  c.fillStyle="#1e1e2a";c.fillRect(W/2-60,cy,120,18);
+  limb(c,W/2-20,cy,W/2-20,cy+55,BC,9); limb(c,W/2+20,cy,W/2+20,cy+55,BC,9);
+  limb(c,W/2-20,cy+55,W/2-16,cy+100-rise,BC,8); limb(c,W/2+20,cy+55,W/2+16,cy+100-rise,BC,8);
+  limb(c,W/2-16,cy+100-rise,W/2-28,cy+100-rise+4,BC,6);
+  limb(c,W/2+16,cy+100-rise,W/2+28,cy+100-rise+4,BC,6);
+  gnd(c,W/2,cy+106);
+});
+
+reg(["donkey calf raise","donkey calf raises"], (t,c,W,H)=>{
+  const s=Math.sin(t*3.5),rise=((s+1)/2)*26,cy=H*.46;
+  const{sx,sy}=hinged(c,W/2,cy,.55);
+  limb(c,sx-10,sy+8,W/2-20,cy+55,BC,9); limb(c,sx+10,sy+8,W/2+20,cy+55,BC,9);
+  limb(c,W/2-20,cy+55,W/2-16,cy+100-rise,BC,8); limb(c,W/2+20,cy+55,W/2+16,cy+100-rise,BC,8);
+  limb(c,W/2-16,cy+100-rise,W/2-28,cy+104-rise,BC,6);
+  limb(c,W/2+16,cy+100-rise,W/2+28,cy+104-rise,BC,6);
+  c.fillStyle="#1e1e2a";c.fillRect(W/2-60,cy-5,30,16);
+  gnd(c,W/2,cy+108);
+});
+
+reg(["barbell curl","barbell curls"], (t,c,W,H)=>{
+  const s=Math.sin(t*3),cy=H*.41,ang=.2+((s+1)/2)*1.15;
+  standing(c,W/2,cy-80,cy-80,cy,cy+60,cy+140);
+  const ey=cy+14;
+  limb(c,W/2-34,ey,(W/2-34)-Math.cos(ang)*55,ey-Math.sin(ang)*55,AC,7);
+  limb(c,W/2+34,ey,(W/2+34)+Math.cos(ang)*55,ey-Math.sin(ang)*55,AC,7);
+  db(c,(W/2-34)-Math.cos(ang)*55-14,ey-Math.sin(ang)*55-6);
+  db(c,(W/2+34)+Math.cos(ang)*55+2,ey-Math.sin(ang)*55-6);
+});
+
+reg(["concentration curl","concentration curls"], (t,c,W,H)=>{
+  const s=Math.sin(t*3),cy=H*.5,ang=.2+((s+1)/2)*1.1;
+  head(c,W/2-10,cy-65); limb(c,W/2-10,cy-48,W/2-10,cy-5,BC,10);
+  limb(c,W/2-10,cy-5,W/2-40,cy+50,BC,9); limb(c,W/2-10,cy-5,W/2+30,cy+50,BC,9);
+  limb(c,W/2-40,cy+50,W/2-38,cy+95,BC,8); limb(c,W/2+30,cy+50,W/2+28,cy+95,BC,8);
+  limb(c,W/2-40,cy+50,W/2-40,cy+95,AC,7);
+  limb(c,W/2-40,cy+52,W/2-40-Math.cos(ang)*50,cy+52-Math.sin(ang)*50,AC,7);
+  db(c,W/2-40-Math.cos(ang)*50-14,cy+52-Math.sin(ang)*50-6);
+});
+
+reg(["hammer curl","hammer curls"], (t,c,W,H)=>{
+  const s=Math.sin(t*3),cy=H*.41,ang=.2+((s+1)/2)*1.15;
+  standing(c,W/2,cy-80,cy-80,cy,cy+60,cy+140);
+  const ey=cy+14;
+  limb(c,W/2-34,ey,(W/2-34)-Math.cos(ang)*55,ey-Math.sin(ang)*55,AC,7);
+  limb(c,W/2+34,ey,(W/2+34)+Math.cos(ang)*55,ey-Math.sin(ang)*55,AC,7);
+  db(c,(W/2-34)-Math.cos(ang)*55-14,ey-Math.sin(ang)*55-6);
+  db(c,(W/2+34)+Math.cos(ang)*55+2,ey-Math.sin(ang)*55-6);
+});
+
+reg(["overhead triceps extension","overhead tricep extension"], (t,c,W,H)=>{
+  const s=Math.sin(t*3),cy=H*.41,ang=.8+s*.6;
+  standing(c,W/2,cy-80,cy-80,cy,cy+60,cy+140);
+  limb(c,W/2-28,cy-42,W/2-28,cy-80,AC,7); limb(c,W/2+28,cy-42,W/2+28,cy-80,AC,7);
+  const lhx=W/2-28+Math.sin(ang)*45,lhy=cy-80+Math.cos(ang)*45;
+  limb(c,W/2-28,cy-80,lhx,lhy,AC,7); limb(c,W/2+28,cy-80,W/2+28+Math.sin(ang)*45,cy-80+Math.cos(ang)*45,AC,7);
+  db(c,lhx-14,lhy-6);
+});
+
+reg(["triceps pushdown (bar)","tricep pushdown (bar)","bar pushdown"], (t,c,W,H)=>{
+  const s=Math.sin(t*3),cy=H*.41,hY=cy-10+48+s*32;
+  standing(c,W/2,cy-80,cy-80,cy,cy+60,cy+140);
+  cable(c,W/2,H*.02,W/2,cy-10);
+  limb(c,W/2-22,cy-10,W/2-22,hY,AC,7); limb(c,W/2+22,cy-10,W/2+22,hY,AC,7);
+  bar(c,W/2-36,hY-4,72,9);
+});
+
+reg(["triceps pushdown (rope)","rope pushdown"], (t,c,W,H)=>{
+  const s=Math.sin(t*3),cy=H*.41,hY=cy-10+48+s*32;
+  standing(c,W/2,cy-80,cy-80,cy,cy+60,cy+140);
+  cable(c,W/2,H*.02,W/2,cy-10);
+  limb(c,W/2-22,cy-10,W/2-22-s*10,hY,AC,7); limb(c,W/2+22,cy-10,W/2+22+s*10,hY,AC,7);
+  c.fillStyle="#666";c.beginPath();c.arc(W/2-22-s*10,hY,5,0,Math.PI*2);c.fill();
+  c.beginPath();c.arc(W/2+22+s*10,hY,5,0,Math.PI*2);c.fill();
+});
+
+reg(["plank","plank (standard)"], (t,c,W,H)=>{
+  const wb=Math.sin(t*7)*2.5,cy=H*.52;
+  head(c,W/2-102,cy-4+wb*.3);
+  limb(c,W/2-84,cy+wb,W/2+62,cy+wb,BC,11);
+  limb(c,W/2-55,cy+wb,W/2-68,cy+42,AC,7); limb(c,W/2+22,cy+wb,W/2+35,cy+42,AC,7);
+  limb(c,W/2+62,cy+wb,W/2+82,cy+6,BC,9);
+  gnd(c,W/2,cy+46);
+});
+
+reg(["dead bug"], (t,c,W,H)=>{
+  const s=Math.sin(t*2.5),cy=H*.5;
+  // lying on back
+  head(c,W/2-90,cy-5);
+  limb(c,W/2-72,cy,W/2+55,cy,BC,10);
+  // alternating arm/leg extension
+  const ext=(s+1)/2;
+  limb(c,W/2-20,cy,W/2-20,cy-52*ext,AC,7); // left leg up
+  limb(c,W/2+20,cy,W/2+20,cy-40*(1-ext),AC,7); // right leg
+  limb(c,W/2-50,cy,W/2-50-55*ext,cy-15,AC,6); // right arm back
+  limb(c,W/2+15,cy,W/2+15+45*(1-ext),cy-15,AC,6);
+  gnd(c,W/2,cy+12);
+});
+
+reg(["bird-dog","bird dog"], (t,c,W,H)=>{
+  const s=Math.sin(t*2.5),cy=H*.5,ext=(s+1)/2;
+  // on all fours
+  head(c,W/2-80,cy-28);
+  limb(c,W/2-60,cy-10,W/2+40,cy-10,BC,10);
+  limb(c,W/2-60,cy-10,W/2-60,cy+35,BC,8); limb(c,W/2-10,cy-10,W/2-10,cy+35,BC,8);
+  limb(c,W/2+10,cy-10,W/2+10,cy+35,BC,8); limb(c,W/2+40,cy-10,W/2+40,cy+35,BC,8);
+  // opposite arm & leg extend
+  limb(c,W/2-60,cy-10,W/2-60-55*ext,cy-10-18*ext,AC,7);
+  limb(c,W/2+40,cy-10,W/2+40+55*ext,cy-10+8*ext,AC,7);
+  gnd(c,W/2,cy+38);
+});
+
+reg(["hanging leg raise","hanging leg raises"], (t,c,W,H)=>{
+  const s=(Math.sin(t*2.5)+1)/2,cy=H*.22;
+  standing(c,W/2,cy+12,cy+12,cy+80,cy+145,cy+215);
+  limb(c,W/2-26,cy+80,W/2-26,cy+80+s*(-35)+35,BC,9);
+  limb(c,W/2+26,cy+80,W/2+26,cy+80+s*(-35)+35,BC,9);
+  limb(c,W/2-52,cy+16,W/2-72,cy,AC,7); limb(c,W/2+52,cy+16,W/2+72,cy,AC,7);
+  bar(c,W/2-90,cy-5,180,14);
+  c.strokeStyle="#555";c.lineWidth=4;
+  c.beginPath();c.moveTo(W/2-90,cy-5);c.lineTo(W/2-90,H*.02);c.stroke();
+  c.beginPath();c.moveTo(W/2+90,cy-5);c.lineTo(W/2+90,H*.02);c.stroke();
+});
+
+reg(["ab wheel rollouts","ab wheel"], (t,c,W,H)=>{
+  const s=(Math.sin(t*2)+1)/2,cy=H*.5,roll=s*70;
+  head(c,W/2-roll+2,cy-32-s*30);
+  limb(c,W/2-roll,cy-14-s*30,W/2+roll*.2,cy,BC,10);
+  limb(c,W/2-roll,cy-14-s*30,W/2-roll-30,cy-14-s*30+32,AC,7);
+  limb(c,W/2-roll,cy-14-s*30,W/2-roll+30,cy-14-s*30+32,AC,7);
+  c.fillStyle="#666";c.beginPath();c.arc(W/2-roll+(60+roll*.4),cy+5,12,0,Math.PI*2);c.fill();
+  c.fillStyle="#888";c.beginPath();c.arc(W/2-roll+(60+roll*.4),cy+5,5,0,Math.PI*2);c.fill();
+  gnd(c,W/2,cy+18);
+});
+
+reg(["crunches","crunch"], (t,c,W,H)=>{
+  const s=(Math.sin(t*3)+1)/2,cy=H*.56,crunch=s*28;
+  head(c,W/2-10,cy-52+crunch*.5);
+  limb(c,W/2-10,cy-34+crunch*.5,W/2,cy-5+crunch,BC,10);
+  limb(c,W/2,cy-5+crunch,W/2-32,cy+45,BC,9); limb(c,W/2,cy-5+crunch,W/2+32,cy+45,BC,9);
+  limb(c,W/2-32,cy+45,W/2-28,cy+88,BC,8); limb(c,W/2+32,cy+45,W/2+28,cy+88,BC,8);
+  joint(c,W/2-32,cy+45); joint(c,W/2+32,cy+45);
+  limb(c,W/2-22,cy-28,W/2-22,cy-52+crunch*.5,AC,6);
+  limb(c,W/2+22,cy-28,W/2+22,cy-52+crunch*.5,AC,6);
+  gnd(c,W/2,cy+92);
+});
+
+reg(["cable woodchoppers","cable woodchopper","woodchoppers"], (t,c,W,H)=>{
+  const s=Math.sin(t*2.8),cy=H*.44,rot=s*.7;
+  standing(c,W/2,cy-80,cy-80,cy,cy+60,cy+140);
+  cable(c,0,H*.15,W/2-40+rot*30,cy-35+s*18);
+  limb(c,W/2,cy-28,W/2-40+rot*30,cy-35+s*18,AC,7);
+  limb(c,W/2,cy-28,W/2+40+rot*30,cy-35-s*18,AC,7);
+  c.fillStyle=BC;c.beginPath();c.arc(W/2-40+rot*30,cy-35+s*18,6,0,Math.PI*2);c.fill();
+});
+
+reg(["clean and jerk"], (t,c,W,H)=>{
+  const phase=(t*.4)%2,cy=H*.42;
+  const s=(Math.sin(t*3)+1)/2;
+  if(phase<1){
+    // clean pull
+    const ang=(1-s)*.65;
+    const{sx,sy}=hinged(c,W/2,cy,ang);
+    const hY=cy+60*Math.sin(ang)+(1-s)*35;
+    limb(c,sx-14,sy+8,W/2-52,hY,AC,7); limb(c,sx+14,sy+8,W/2+52,hY,AC,7);
+    bar(c,W/2-80,hY-2,160,12);
+  } else {
+    // jerk press
+    const bY=cy-80-s*55;
+    standing(c,W/2,cy-82,cy-82,cy,cy+60,cy+140);
+    limb(c,W/2-52,cy-30,W/2-64,bY+8,AC,7); limb(c,W/2+52,cy-30,W/2+64,bY+8,AC,7);
+    bar(c,W/2-80,bY,160,11);
+  }
+  gnd(c,W/2,cy+126);
+});
+
+reg(["thrusters","thruster"], (t,c,W,H)=>{
+  const s=(Math.sin(t*2.2)+1)/2,cy=H*.38,hD=s*60,kF=s*16,hY=cy-hD*.12;
+  const bY=cy-82-s*52;
+  head(c,W/2,hY-80);
+  limb(c,W/2,hY-62,W/2,hY+hD*.2,BC,10);
+  limb(c,W/2,hY+hD*.2,W/2-38-kF,hY+hD*.2+60,BC,9);
+  limb(c,W/2,hY+hD*.2,W/2+38+kF,hY+hD*.2+60,BC,9);
+  limb(c,W/2-38-kF,hY+hD*.2+60,W/2-28,hY+hD*.2+118,BC,8);
+  limb(c,W/2+38+kF,hY+hD*.2+60,W/2+28,hY+hD*.2+118,BC,8);
+  joint(c,W/2-38-kF,hY+hD*.2+60); joint(c,W/2+38+kF,hY+hD*.2+60);
+  limb(c,W/2-48,hY-55,W/2-62,bY+8,AC,7); limb(c,W/2+48,hY-55,W/2+62,bY+8,AC,7);
+  bar(c,W/2-78,bY,156,11);
+  gnd(c,W/2,hY+hD*.2+124);
+});
+
+reg(["snatch"], (t,c,W,H)=>{
+  const s=(Math.sin(t*2)+1)/2,ang=(1-s)*.72,cy=H*(.54-s*.18);
+  const{sx,sy}=hinged(c,W/2,cy,ang);
+  const hY=cy+70*Math.sin(ang)+(1-s)*42;
+  const bY=cy-80-s*65;
+  limb(c,sx-14,sy+8,W/2-62,s<.5?hY:bY+8,AC,7);
+  limb(c,sx+14,sy+8,W/2+62,s<.5?hY:bY+8,AC,7);
+  bar(c,W/2-90,s<.5?hY-2:bY,180,12);
+  gnd(c,W/2,cy+126);
+});
+
+reg(["burpees","burpee"], (t,c,W,H)=>{
+  const phase=Math.floor((t*.5)%4),cy=H*.5;
+  const s=(Math.sin(t*4)+1)/2;
+  if(phase===0){
+    // standing
+    standing(c,W/2,cy-82,cy-82,cy,cy+60,cy+140);
+  } else if(phase===1){
+    // squat down
+    const hD=s*55,kF=s*14,hY=cy-hD*.1;
+    head(c,W/2,hY-78);limb(c,W/2,hY-60,W/2,hY+hD*.2,BC,10);
+    limb(c,W/2,hY+hD*.2,W/2-38-kF,hY+hD*.2+55,BC,9);limb(c,W/2,hY+hD*.2,W/2+38+kF,hY+hD*.2+55,BC,9);
+    limb(c,W/2-38-kF,hY+hD*.2+55,W/2-26,hY+hD*.2+108,BC,8);limb(c,W/2+38+kF,hY+hD*.2+55,W/2+26,hY+hD*.2+108,BC,8);
+  } else if(phase===2){
+    // plank
+    const wb=Math.sin(t*7)*2,pcy=cy+30;
+    head(c,W/2-100,pcy-4);limb(c,W/2-82,pcy,W/2+62,pcy,BC,10);
+    limb(c,W/2-50,pcy,W/2-65,pcy+38,AC,7);limb(c,W/2+22,pcy,W/2+36,pcy+38,AC,7);
+    limb(c,W/2+62,pcy,W/2+82,pcy+6,BC,9);
+  } else {
+    // jump up
+    const jump=s*35,jumpCy=cy-jump;
+    standing(c,W/2,jumpCy-82,jumpCy-82,jumpCy,jumpCy+60,jumpCy+140);
+    limb(c,W/2-38,jumpCy-42,W/2-65,jumpCy-80,AC,7);
+    limb(c,W/2+38,jumpCy-42,W/2+65,jumpCy-80,AC,7);
+  }
+  gnd(c,W/2,cy+144);
+});
+
+reg(["treadmill run","treadmill","running","run"], (t,c,W,H)=>{
+  const cy=H*.36,lA=Math.sin(t*4.2)*.72,aA=Math.sin(t*4.2+Math.PI)*.52;
+  head(c,W/2,cy-82); limb(c,W/2,cy-64,W/2,cy,BC,10);
+  limb(c,W/2-38,cy-42,W/2-38-Math.cos(aA)*46,cy-42-Math.sin(aA)*38,AC,7);
+  limb(c,W/2+38,cy-42,W/2+38+Math.cos(-aA)*46,cy-42-Math.sin(-aA)*38,AC,7);
+  const lKx=W/2-24+Math.sin(lA)*40,lKy=cy+60-Math.abs(Math.cos(lA))*20;
+  limb(c,W/2-24,cy,lKx,lKy,BC,9); limb(c,lKx,lKy,lKx+Math.sin(lA)*18,lKy+50,BC,8); joint(c,lKx,lKy);
+  const rKx=W/2+24+Math.sin(-lA)*40,rKy=cy+60-Math.abs(Math.cos(lA))*20;
+  limb(c,W/2+24,cy,rKx,rKy,BC,9); limb(c,rKx,rKy,rKx+Math.sin(-lA)*18,rKy+50,BC,8); joint(c,rKx,rKy);
+  // treadmill belt
+  c.fillStyle="#1e1e2a";c.fillRect(W/2-100,cy+114,200,12);
+  c.strokeStyle="#2e2e38";c.lineWidth=1;
+  for(let i=0;i<6;i++){const x=(W/2-90+(i*36+t*60)%200);c.beginPath();c.moveTo(x,cy+114);c.lineTo(x,cy+126);c.stroke();}
+});
+
+reg(["elliptical","elliptical machine"], (t,c,W,H)=>{
+  const cy=H*.36,lA=Math.sin(t*2.5)*.55,aA=Math.sin(t*2.5+Math.PI)*.38;
+  head(c,W/2,cy-82); limb(c,W/2,cy-64,W/2,cy,BC,10);
+  limb(c,W/2-38,cy-42,W/2-38-Math.cos(aA)*36,cy-42-Math.sin(aA)*28,AC,7);
+  limb(c,W/2+38,cy-42,W/2+38+Math.cos(-aA)*36,cy-42-Math.sin(-aA)*28,AC,7);
+  const lKx=W/2-22+Math.sin(lA)*35,lKy=cy+58-Math.abs(Math.cos(lA))*15;
+  limb(c,W/2-22,cy,lKx,lKy,BC,9); limb(c,lKx,lKy,lKx+Math.sin(lA)*14,lKy+48,BC,8); joint(c,lKx,lKy);
+  const rKx=W/2+22+Math.sin(-lA)*35,rKy=cy+58-Math.abs(Math.cos(lA))*15;
+  limb(c,W/2+22,cy,rKx,rKy,BC,9); limb(c,rKx,rKy,rKx+Math.sin(-lA)*14,rKy+48,BC,8); joint(c,rKx,rKy);
+  // elliptical rails
+  c.strokeStyle="#2e2e38";c.lineWidth=3;
+  c.beginPath();c.moveTo(W/2-55,cy+108);c.lineTo(W/2+55,cy+108);c.stroke();
+  cable(c,W/2-38,cy-42,W/2-48,cy+20); cable(c,W/2+38,cy-42,W/2+48,cy+20);
+  gnd(c,W/2,cy+114);
+});
+
+reg(["rowing machine","rowing","row machine"], (t,c,W,H)=>{
+  const s=Math.sin(t*2.5),cy=H*.5,ex=55+s*52;
+  head(c,W/2,cy-68); limb(c,W/2,cy-50,W/2,cy-5,BC,10);
+  limb(c,W/2-20,cy-30,W/2-20-ex,cy-28,AC,7); limb(c,W/2+20,cy-30,W/2+20-ex*.3,cy-28,AC,7);
+  cable(c,0,cy-28,W/2-20-ex,cy-28);
+  c.fillStyle="#666";c.fillRect(W/2-30-ex-10,cy-35,14,16);
+  c.fillStyle="#1e1e2a";c.fillRect(W/2-20,cy-5,105,18);
+  // seat slides
+  const seatX=W/2+10-s*20;
+  c.fillStyle="#3a3a4a";c.fillRect(seatX-18,cy-8,36,10);
+  // footrests
+  limb(c,W/2,cy-5,W/2-28,cy+58,BC,9); limb(c,W/2,cy-5,W/2+28,cy+58,BC,9);
+  gnd(c,W/2,cy+62);
+});
+
+reg(["stairmaster","stair master","stair climber"], (t,c,W,H)=>{
+  const cy=H*.38,lA=Math.sin(t*2.8)*.5;
+  head(c,W/2,cy-82); limb(c,W/2,cy-64,W/2,cy,BC,10);
+  limb(c,W/2-38,cy-42,W/2-52,cy-22,AC,7); limb(c,W/2+38,cy-42,W/2+52,cy-22,AC,7);
+  cable(c,W/2-52,cy-22,W/2-52,cy+80); cable(c,W/2+52,cy-22,W/2+52,cy+80);
+  // alternating steps
+  const lKy=cy+55+Math.sin(t*2.8)*22;
+  const rKy=cy+55-Math.sin(t*2.8)*22;
+  limb(c,W/2-22,cy,W/2-22,lKy,BC,9); limb(c,W/2-22,lKy,W/2-18,lKy+45,BC,8); joint(c,W/2-22,lKy);
+  limb(c,W/2+22,cy,W/2+22,rKy,BC,9); limb(c,W/2+22,rKy,W/2+18,rKy+45,BC,8); joint(c,W/2+22,rKy);
+  // step platforms
+  c.fillStyle="#1e1e2a";
+  c.fillRect(W/2-50,lKy+44,36,8); c.fillRect(W/2+14,rKy+44,36,8);
+  gnd(c,W/2,cy+140);
+});
+
+reg(["stationary bike","stationary bicycle","spin bike","bike"], (t,c,W,H)=>{
+  const cy=H*.44,pedal=t*2.5;
+  head(c,W/2-10,cy-65); limb(c,W/2-10,cy-48,W/2-10,cy+2,BC,10);
+  // handlebars
+  limb(c,W/2-10,cy-32,W/2+38,cy-38,AC,7); limb(c,W/2-10,cy-32,W/2-42,cy-38,AC,7);
+  limb(c,W/2+38,cy-38,W/2+44,cy-30,AC,6); limb(c,W/2-42,cy-38,W/2-48,cy-30,AC,6);
+  // seat
+  c.fillStyle="#1e1e2a";c.fillRect(W/2-30,cy+2,42,10);
+  // frame
+  limb(c,W/2,cy+10,W/2+28,cy+65,BC,8); limb(c,W/2,cy+10,W/2-20,cy+65,BC,8);
+  // wheel
+  c.strokeStyle="#2e2e38";c.lineWidth=4;c.beginPath();c.arc(W/2+28,cy+85,22,0,Math.PI*2);c.stroke();
+  // cranks & pedals
+  const px1=W/2+28+Math.cos(pedal)*14,py1=cy+85+Math.sin(pedal)*14;
+  const px2=W/2+28+Math.cos(pedal+Math.PI)*14,py2=cy+85+Math.sin(pedal+Math.PI)*14;
+  limb(c,W/2+28,cy+85,px1,py1,AC,5); limb(c,W/2+28,cy+85,px2,py2,AC,5);
+  c.fillStyle="#666";c.fillRect(px1-8,py1-3,16,6);c.fillRect(px2-8,py2-3,16,6);
+  // legs pedalling
+  limb(c,W/2-10,cy+2,W/2+28,cy+85,BC,9);
+  limb(c,W/2-10,cy+2,px1,py1,BC,8); limb(c,px1,py1,W/2+10,cy+2,BC,8);
+  gnd(c,W/2+28,cy+110);
+});
+
+/* ── Extra aliases for user's exercise names ── */
+reg(["preacher curl","preacher curls"], (t,c,W,H)=>{
+  const s=Math.sin(t*3),cy=H*.46,ang=.3+((s+1)/2)*.95;
+  c.fillStyle="#1e1e2a";c.fillRect(W/2-60,cy-20,120,60);
+  head(c,W/2,cy-62); limb(c,W/2,cy-44,W/2,cy-20,BC,10);
+  limb(c,W/2-34,cy-20,W/2-34,cy,BC,7); limb(c,W/2+34,cy-20,W/2+34,cy,BC,7);
+  const lhx=W/2-34-Math.cos(ang)*52,lhy=cy-Math.sin(ang)*52;
+  const rhx=W/2+34+Math.cos(ang)*52,rhy=cy-Math.sin(ang)*52;
+  limb(c,W/2-34,cy,lhx,lhy,AC,7); limb(c,W/2+34,cy,rhx,rhy,AC,7);
+  bar(c,lhx-14,lhy-6,28+Math.cos(ang)*44,9);
+});
+
+reg(["dumbbell curl","dumbbell curls"], (t,c,W,H)=>{
+  const s=Math.sin(t*3),cy=H*.41,ang=.2+((s+1)/2)*1.15;
+  standing(c,W/2,cy-80,cy-80,cy,cy+60,cy+140);
+  const ey=cy+14;
+  limb(c,W/2-34,ey,(W/2-34)-Math.cos(ang)*55,ey-Math.sin(ang)*55,AC,7);
+  limb(c,W/2+34,ey,(W/2+34)+Math.cos(ang)*55,ey-Math.sin(ang)*55,AC,7);
+  db(c,(W/2-34)-Math.cos(ang)*55-14,ey-Math.sin(ang)*55-6);
+  db(c,(W/2+34)+Math.cos(ang)*55+2,ey-Math.sin(ang)*55-6);
+});
+
+reg(["21s"], (t,c,W,H)=>{
+  // 21s = partial then full curl; animate with exaggerated ROM
+  const s=Math.sin(t*4),cy=H*.41,ang=.1+((s+1)/2)*1.4;
+  standing(c,W/2,cy-80,cy-80,cy,cy+60,cy+140);
+  const ey=cy+14;
+  limb(c,W/2-34,ey,(W/2-34)-Math.cos(ang)*55,ey-Math.sin(ang)*55,AC,7);
+  limb(c,W/2+34,ey,(W/2+34)+Math.cos(ang)*55,ey-Math.sin(ang)*55,AC,7);
+  db(c,(W/2-34)-Math.cos(ang)*55-14,ey-Math.sin(ang)*55-6);
+  db(c,(W/2+34)+Math.cos(ang)*55+2,ey-Math.sin(ang)*55-6);
+  c.fillStyle=AC+"44";c.font="bold 11px DM Sans,sans-serif";c.fillText("21s",W/2-10,cy-92);
+});
+
+reg(["tricep dips","tricep dip"], (t,c,W,H)=>{
+  // same as bench dips
+  const s=Math.sin(t*2.5),cy=H*.44+((s+1)/2)*32;
+  c.fillStyle="#1e1e2a";c.fillRect(W/2-90,H*.3,180,16);
+  head(c,W/2,cy-95); limb(c,W/2,cy-78,W/2,cy-22,BC,10);
+  limb(c,W/2-42,cy-68,W/2-70,H*.3+16,AC,7);
+  limb(c,W/2+42,cy-68,W/2+70,H*.3+16,AC,7);
+  limb(c,W/2,cy-22,W/2-28,cy+55,BC,9); limb(c,W/2,cy-22,W/2+28,cy+55,BC,9);
+  limb(c,W/2-28,cy+55,W/2-22,cy+115,BC,8); limb(c,W/2+28,cy+55,W/2+22,cy+115,BC,8);
+  gnd(c,W/2,cy+120);
+});
+
+reg(["skull crushers","skull crusher"], (t,c,W,H)=>{
+  const s=Math.sin(t*3),cy=H*.52,bA=Math.PI/2+s*.55;
+  c.fillStyle="#1e1e2a";c.fillRect(W/2-90,cy+20,180,15);
+  standing(c,W/2,cy-58,cy-58,cy+22,cy+78,cy+158);
+  const ex=W/2-52,ey=cy-22,bL=55;
+  limb(c,ex,ey,ex+Math.cos(bA)*bL,ey-Math.sin(bA)*bL,AC,7);
+  limb(c,W/2+52,ey,(W/2+52)+Math.cos(Math.PI-bA)*bL,ey-Math.sin(Math.PI-bA)*bL,AC,7);
+  bar(c,ex+Math.cos(bA)*bL-52,ey-Math.sin(bA)*bL-7,104,10);
+});
+
+reg(["kickbacks","kickback"], (t,c,W,H)=>{
+  const s=(Math.sin(t*3)+1)/2,cy=H*.46;
+  const{sx,sy}=hinged(c,W/2,cy,.6);
+  const ang=s*1.3;
+  limb(c,sx+12,sy+8,W/2+38,cy+35,AC,7);
+  limb(c,W/2+38,cy+35,W/2+38+Math.cos(ang)*52,cy+35-Math.sin(ang)*8,AC,7);
+  db(c,W/2+38+Math.cos(ang)*52+2,cy+35-Math.sin(ang)*8-6);
+  gnd(c,W/2,cy+126);
+});
+
+reg(["barbell squat (back)","back squat","barbell squat (front)","front squat"], (t,c,W,H)=>{
+  const s=(Math.sin(t*2.5)+1)/2,hD=s*65,kF=s*18,cy=H*.35,hY=cy-hD*.15;
+  head(c,W/2,hY-80);
+  limb(c,W/2,hY-62,W/2,hY+hD*.2,BC,10);
+  limb(c,W/2,hY+hD*.2,W/2-40-kF,hY+hD*.2+62,BC,9);
+  limb(c,W/2,hY+hD*.2,W/2+40+kF,hY+hD*.2+62,BC,9);
+  limb(c,W/2-40-kF,hY+hD*.2+62,W/2-28,hY+hD*.2+130,BC,8);
+  limb(c,W/2+40+kF,hY+hD*.2+62,W/2+28,hY+hD*.2+130,BC,8);
+  joint(c,W/2-40-kF,hY+hD*.2+62); joint(c,W/2+40+kF,hY+hD*.2+62);
+  bar(c,W/2-80,hY-66,160,11);
+  limb(c,W/2-40,hY-58,W/2-78,hY-58,AC,6); limb(c,W/2+40,hY-58,W/2+78,hY-58,AC,6);
+  gnd(c,W/2,hY+hD*.2+136);
+});
+
+reg(["battle ropes","battle rope"], (t,c,W,H)=>{
+  const cy=H*.38,s=Math.sin(t*5);
+  standing(c,W/2,cy-80,cy-80,cy,cy+60,cy+140);
+  // wave ropes
+  for(let i=0;i<20;i++){
+    const x=W/2-160+i*16,wave=Math.sin(t*5+i*.6)*18*(i/20);
+    const x2=W/2-160+(i+1)*16,wave2=Math.sin(t*5+(i+1)*.6)*18*((i+1)/20);
+    limb(c,x,cy-10+wave,x2,cy-10+wave2,AC,3);
+    limb(c,x,cy-10-wave,x2,cy-10-wave2,AC,3);
+  }
+  limb(c,W/2-38,cy-20,W/2-160,cy-10,AC,4);
+  limb(c,W/2+38,cy-20,W/2-160,cy-10,AC,4);
+  c.fillStyle="#444";c.fillRect(W/2-168,cy-18,8,16);
+  gnd(c,W/2,cy+140);
+});
+
+reg(["bench press (barbell)"], (t,c,W,H)=>{
+  const s=Math.sin(t*3),cy=H*.5,a=.45+s*.38;
+  c.fillStyle="#1e1e2a";c.fillRect(W/2-85,cy+30,170,16);
+  standing(c,W/2,cy-55,cy-55,cy+20,cy+80,cy+160);
+  const lx=W/2-52,rx=W/2+52,ay=cy-25;
+  limb(c,lx,ay,lx-32*Math.cos(a),ay-42*Math.sin(a),AC,7);
+  limb(c,rx,ay,rx+32*Math.cos(a),ay-42*Math.sin(a),AC,7);
+  bar(c,W/2-90,ay-42*Math.sin(a)-8,180,12);
+});
+
+reg(["bench press (dumbbell)"], (t,c,W,H)=>{
+  const s=Math.sin(t*3),cy=H*.5,a=.45+s*.4;
+  c.fillStyle="#1e1e2a";c.fillRect(W/2-85,cy+30,170,16);
+  standing(c,W/2,cy-55,cy-55,cy+20,cy+80,cy+160);
+  const lx=W/2-52,rx=W/2+52,ay=cy-25;
+  const lhx=lx-32*Math.cos(a),lhy=ay-42*Math.sin(a);
+  const rhx=rx+32*Math.cos(a),rhy=ay-42*Math.sin(a);
+  limb(c,lx,ay,lhx,lhy,AC,7); limb(c,rx,ay,rhx,rhy,AC,7);
+  db(c,lhx-14,lhy-6); db(c,rhx+2,rhy-6);
+});
+
+reg(["incline bench press"], (t,c,W,H)=>{
+  const s=Math.sin(t*3),cy=H*.5,a=.52+s*.32;
+  c.fillStyle="#1e1e2a";c.fillRect(W/2-70,cy+20,140,14);c.fillRect(W/2-50,cy-40,100,70);
+  standing(c,W/2,cy-55,cy-55,cy+18,cy+70,cy+145);
+  const lx=W/2-50,rx=W/2+50,ay=cy-45;
+  limb(c,lx,ay,lx-30*Math.cos(a),ay-50*Math.sin(a),AC,7);
+  limb(c,rx,ay,rx+30*Math.cos(a),ay-50*Math.sin(a),AC,7);
+  bar(c,W/2-80,ay-50*Math.sin(a)-8,160,12);
+});
+
+reg(["dips"], (t,c,W,H)=>{
+  const s=Math.sin(t*2.5),cy=H*.42+((s+1)/2)*38;
+  head(c,W/2,cy-110);
+  limb(c,W/2,cy-92,W/2,cy-15,BC,10);
+  limb(c,W/2-50,cy-82,W/2-50,cy+8,BC,9); limb(c,W/2+50,cy-82,W/2+50,cy+8,BC,9);
+  limb(c,W/2-50,cy-82,W/2,cy-82,BC,6); limb(c,W/2+50,cy-82,W/2,cy-82,BC,6);
+  c.fillStyle="#444";c.fillRect(W/2-64,cy-88,12,100);c.fillRect(W/2+52,cy-88,12,100);
+  limb(c,W/2,cy-15,W/2-28,cy+65,BC,9); limb(c,W/2,cy-15,W/2+28,cy+65,BC,9);
+  limb(c,W/2-28,cy+65,W/2-22,cy+125,BC,8); limb(c,W/2+28,cy+65,W/2+22,cy+125,BC,8);
+  joint(c,W/2-28,cy+65); joint(c,W/2+28,cy+65);
+  gnd(c,W/2,cy+130);
+});
+
+reg(["chest press machine"], (t,c,W,H)=>{
+  const s=Math.sin(t*2.5),cy=H*.44,sp=52+s*42;
+  c.fillStyle="#1e1e2a";c.fillRect(W/2-110,cy-95,220,190);
+  standing(c,W/2,cy-74,cy-74,cy+6,cy+66,cy+146);
+  limb(c,W/2-38,cy-22,W/2-sp,cy-22+s*12,AC,7);
+  limb(c,W/2+38,cy-22,W/2+sp,cy-22+s*12,AC,7);
+  c.fillStyle="#3a3a4a";c.fillRect(W/2-sp-8,cy-32+s*12,14,22);
+  c.fillRect(W/2+sp-6,cy-32+s*12,14,22);
+});
+
+reg(["decline bench press"], (t,c,W,H)=>{
+  const s=Math.sin(t*3),cy=H*.52,a=.45+s*.38;
+  c.fillStyle="#1e1e2a";c.fillRect(W/2-85,cy+25,170,16);
+  standing(c,W/2,cy-52,cy-52,cy+22,cy+80,cy+155);
+  const lx=W/2-52,rx=W/2+52,ay=cy-18;
+  limb(c,lx,ay,lx-30*Math.cos(a),ay-38*Math.sin(a),AC,7);
+  limb(c,rx,ay,rx+30*Math.cos(a),ay-38*Math.sin(a),AC,7);
+  bar(c,W/2-88,ay-38*Math.sin(a)-8,176,12);
+});
+
+reg(["push-ups","pushups"], (t,c,W,H)=>{
+  const s=Math.sin(t*3),cy=H*.52+s*20;
+  head(c,W/2-100,cy-5);
+  limb(c,W/2-82,cy,W/2+65,cy,BC,10);
+  limb(c,W/2-42,cy-5,W/2-80,cy+28-s*18,AC,7);
+  limb(c,W/2+42,cy-5,W/2+80,cy+28-s*18,AC,7);
+  limb(c,W/2+65,cy,W/2+95,cy+6,BC,9);
+  gnd(c,W/2,cy+35);
+});
+
+reg(["cable flyes","cable flye","cable crossover","dumbbell flyes","dumbbell flye"], (t,c,W,H)=>{
+  const s=Math.sin(t*2.5),cy=H*.44,sp=58+s*45;
+  standing(c,W/2,cy-68,cy-68,cy+12,cy+72,cy+152);
+  const sy=cy-18;
+  cable(c,10,20,W/2-sp,sy+s*18); cable(c,W-10,20,W/2+sp,sy+s*18);
+  limb(c,W/2,sy,W/2-sp,sy+s*18,AC,7); limb(c,W/2,sy,W/2+sp,sy+s*18,AC,7);
+  c.fillStyle=BC;c.beginPath();c.arc(W/2-sp,sy+s*18,6,0,Math.PI*2);c.fill();
+  c.beginPath();c.arc(W/2+sp,sy+s*18,6,0,Math.PI*2);c.fill();
+});
+
+reg(["pull-ups","pullup","pull up","pull-up"], (t,c,W,H)=>{
+  const s=Math.sin(t*2.5),bY=H*.52+s*42;
+  standing(c,W/2,bY-68,bY-68,bY+10,bY+72,bY+152);
+  limb(c,W/2-52,bY-48,W/2-78,H*.14,AC,7); limb(c,W/2+52,bY-48,W/2+78,H*.14,AC,7);
+  bar(c,W/2-100,H*.10,200,14);
+  c.strokeStyle="#555";c.lineWidth=4;
+  c.beginPath();c.moveTo(W/2-100,H*.10);c.lineTo(W/2-100,H*.02);c.stroke();
+  c.beginPath();c.moveTo(W/2+100,H*.10);c.lineTo(W/2+100,H*.02);c.stroke();
+});
+
+reg(["lat pulldown (narrow grip)","lat pulldown (narrow)","lat pulldown narrow"], (t,c,W,H)=>{
+  const s=Math.sin(t*2.5),cy=H*.44,bY=H*.08+((s+1)/2)*62;
+  standing(c,W/2,cy-74,cy-74,cy+6,cy+66,cy+146);
+  limb(c,W/2-30,cy-38,W/2-40,bY+8,AC,7); limb(c,W/2+30,cy-38,W/2+40,bY+8,AC,7);
+  c.fillStyle="#666";c.beginPath();c.moveTo(W/2-40,bY+8);c.lineTo(W/2+40,bY+8);c.lineTo(W/2,bY+30);c.closePath();c.fill();
+  cable(c,W/2,H*.01,W/2,bY);
+});
+
+reg(["chin-ups","chinup","chin up","chin-up"], (t,c,W,H)=>{
+  const s=Math.sin(t*2.5),bY=H*.52+s*42;
+  standing(c,W/2,bY-68,bY-68,bY+10,bY+72,bY+152);
+  limb(c,W/2-44,bY-48,W/2-62,H*.14,AC,7); limb(c,W/2+44,bY-48,W/2+62,H*.14,AC,7);
+  bar(c,W/2-72,H*.10,144,14);
+  c.strokeStyle="#555";c.lineWidth=4;
+  c.beginPath();c.moveTo(W/2-72,H*.10);c.lineTo(W/2-72,H*.02);c.stroke();
+  c.beginPath();c.moveTo(W/2+72,H*.10);c.lineTo(W/2+72,H*.02);c.stroke();
+});
+
+reg(["lat pulldown (wide grip)","lat pulldown wide"], (t,c,W,H)=>{
+  const s=Math.sin(t*2.5),cy=H*.44,bY=H*.08+((s+1)/2)*62;
+  standing(c,W/2,cy-74,cy-74,cy+6,cy+66,cy+146);
+  limb(c,W/2-52,cy-38,W/2-80,bY+8,AC,7); limb(c,W/2+52,cy-38,W/2+80,bY+8,AC,7);
+  bar(c,W/2-86,bY,172,10); cable(c,W/2,H*.01,W/2,bY);
+});
+
+reg(["chest-supported row","t-bar row","t bar row"], (t,c,W,H)=>{
+  const s=Math.sin(t*3),cy=H*.46;
+  const{sx,sy}=hinged(c,W/2,cy,.55);
+  const hY=cy+50-s*30;
+  limb(c,sx-12,sy+12,W/2-40,hY,AC,7); limb(c,sx+12,sy+12,W/2+40,hY,AC,7);
+  c.fillStyle="#666";c.fillRect(W/2-44,hY,88,10);
+  c.fillStyle="#555";c.fillRect(W/2-20,hY-20,40,22);
+  gnd(c,W/2,cy+125);
+});
+
+reg(["deadlift","deadlifts"], (t,c,W,H)=>{
+  const s=(Math.sin(t*2)+1)/2,ang=(1-s)*.78,cy=H*(.56-s*.16);
+  const{sx,sy}=hinged(c,W/2,cy,ang);
+  const hY=cy+70*Math.sin(ang)+(1-s)*42;
+  limb(c,sx-14,sy+8,W/2-52,hY,AC,7); limb(c,sx+14,sy+8,W/2+52,hY,AC,7);
+  bar(c,W/2-90,hY-2,180,12); gnd(c,W/2,cy+126);
+});
+
+reg(["rack pulls","rack pull"], (t,c,W,H)=>{
+  const s=(Math.sin(t*2)+1)/2,ang=(1-s)*.45,cy=H*(.52-s*.1);
+  const{sx,sy}=hinged(c,W/2,cy,ang);
+  const hY=cy+55*Math.sin(ang)+(1-s)*28;
+  limb(c,sx-14,sy+8,W/2-52,hY,AC,7); limb(c,sx+14,sy+8,W/2+52,hY,AC,7);
+  bar(c,W/2-90,hY-2,180,12);
+  // rack pegs
+  c.fillStyle="#444";c.fillRect(W/2-100,hY+2,10,40);c.fillRect(W/2+90,hY+2,10,40);
+  gnd(c,W/2,cy+126);
+});
+
+reg(["overhead press (military press)","push press","overhead press"], (t,c,W,H)=>{
+  const s=Math.sin(t*2.5),cy=H*.41,bY=cy-82-((s+1)/2)*58;
+  standing(c,W/2,cy-82,cy-82,cy,cy+60,cy+140);
+  limb(c,W/2-52,cy-30,W/2-64,bY+8,AC,7); limb(c,W/2+52,cy-30,W/2+64,bY+8,AC,7);
+  bar(c,W/2-80,bY,160,11);
+});
+
+reg(["front raise","front raises"], (t,c,W,H)=>{
+  const s=(Math.sin(t*2.5)+1)/2,cy=H*.41,lift=s*85;
+  standing(c,W/2,cy-82,cy-82,cy,cy+60,cy+140);
+  limb(c,W/2-36,cy-10,W/2-55,cy-10-lift,AC,7);
+  limb(c,W/2+36,cy-10,W/2+55,cy-10-lift,AC,7);
+  db(c,W/2-68,cy-10-lift-5); db(c,W/2+55,cy-10-lift-5);
+});
+
+reg(["face pulls","face pull","rear delt fly","rear delt flye"], (t,c,W,H)=>{
+  const s=Math.sin(t*2.5),cy=H*.41,px=52+s*32;
+  standing(c,W/2,cy-82,cy-82,cy,cy+60,cy+140);
+  const hy=cy-55-s*10;
+  limb(c,W/2-36,cy-20,W/2-px,hy,AC,7); limb(c,W/2+36,cy-20,W/2+px,hy,AC,7);
+  cable(c,W+10,cy-60,W/2+px,hy); cable(c,W+10,cy-60,W/2-px,hy);
+});
+
+reg(["lateral raise","lateral raises"], (t,c,W,H)=>{
+  const s=(Math.sin(t*2.5)+1)/2,cy=H*.41,sp=s*82;
+  standing(c,W/2,cy-82,cy-82,cy,cy+60,cy+140);
+  limb(c,W/2-38,cy-14,W/2-38-sp,cy-14-sp*.42,AC,7);
+  limb(c,W/2+38,cy-14,W/2+38+sp,cy-14-sp*.42,AC,7);
+  db(c,W/2-38-sp-14,cy-14-sp*.42-5); db(c,W/2+38+sp+2,cy-14-sp*.42-5);
+});
+
+reg(["reverse pec deck","reverse pec deck fly"], (t,c,W,H)=>{
+  const s=Math.sin(t*2.5),cy=H*.44,sp=52+s*48;
+  c.fillStyle="#1e1e2a";c.fillRect(W/2-110,cy-95,220,190);
+  standing(c,W/2,cy-74,cy-74,cy+6,cy+66,cy+146);
+  limb(c,W/2-38,cy-22,W/2-sp,cy-22-s*16,AC,7);
+  limb(c,W/2+38,cy-22,W/2+sp,cy-22-s*16,AC,7);
+  c.fillStyle="#3a3a4a";c.fillRect(W/2-sp-8,cy-35-s*16,14,22);
+  c.fillRect(W/2+sp-6,cy-35-s*16,14,22);
+});
+
+reg(["hack squat"], (t,c,W,H)=>{
+  const s=(Math.sin(t*2.5)+1)/2,hD=s*65,kF=s*14,cy=H*.38,hY=cy-hD*.1;
+  head(c,W/2,hY-78);
+  limb(c,W/2,hY-60,W/2,hY+hD*.2,BC,10);
+  limb(c,W/2,hY+hD*.2,W/2-36-kF,hY+hD*.2+58,BC,9);
+  limb(c,W/2,hY+hD*.2,W/2+36+kF,hY+hD*.2+58,BC,9);
+  limb(c,W/2-36-kF,hY+hD*.2+58,W/2-24,hY+hD*.2+118,BC,8);
+  limb(c,W/2+36+kF,hY+hD*.2+58,W/2+24,hY+hD*.2+118,BC,8);
+  joint(c,W/2-36-kF,hY+hD*.2+58); joint(c,W/2+36+kF,hY+hD*.2+58);
+  // machine back-pad
+  c.fillStyle="#1e1e2a";c.fillRect(W/2-55,hY-65,110,62);
+  gnd(c,W/2,hY+hD*.2+124);
+});
+
+reg(["lunges","lunge"], (t,c,W,H)=>{
+  const s=(Math.sin(t*2)+1)/2,cy=H*.34,step=s*28;
+  head(c,W/2,cy-82); limb(c,W/2,cy-64,W/2,cy-12,BC,10);
+  limb(c,W/2,cy-12,W/2-30+step,cy+52,BC,9); limb(c,W/2-30+step,cy+52,W/2-18+step,cy+110,BC,8);
+  joint(c,W/2-30+step,cy+52);
+  limb(c,W/2,cy-12,W/2+38-step,cy+55+step*.3,BC,9); limb(c,W/2+38-step,cy+55+step*.3,W/2+28-step,cy+110,BC,8);
+  joint(c,W/2+38-step,cy+55+step*.3);
+  gnd(c,W/2,cy+114);
+});
+
+reg(["leg curls (seated)","seated leg curl"], (t,c,W,H)=>{
+  const s=(Math.sin(t*3)+1)/2,cy=H*.44;
+  head(c,W/2,cy-65); limb(c,W/2,cy-48,W/2,cy,BC,10);
+  c.fillStyle="#1e1e2a";c.fillRect(W/2-60,cy,120,20);
+  limb(c,W/2-20,cy,W/2-20,cy+55,BC,9); limb(c,W/2+20,cy,W/2+20,cy+55,BC,9);
+  joint(c,W/2-20,cy+55); joint(c,W/2+20,cy+55);
+  const curl=s*55;
+  limb(c,W/2-20,cy+55,W/2-20-curl*.5,cy+55+curl*.6,BC,8);
+  limb(c,W/2+20,cy+55,W/2+20-curl*.5,cy+55+curl*.6,BC,8);
+  c.fillStyle="#666";c.fillRect(W/2-20-curl*.5-14,cy+55+curl*.6,38,10);
+});
+
+reg(["kettlebell swings","kettlebell swing"], (t,c,W,H)=>{
+  const s=Math.sin(t*2.5),cy=H*.46,swing=((s+1)/2);
+  const ang=swing*.9;
+  const{sx,sy}=hinged(c,W/2,cy,ang*.5);
+  // arms holding kettlebell
+  const kbY=cy-40+swing*80,kbX=W/2;
+  limb(c,sx-10,sy+10,kbX,kbY,AC,7); limb(c,sx+10,sy+10,kbX,kbY,AC,7);
+  // kettlebell shape
+  c.fillStyle="#555";c.beginPath();c.arc(kbX,kbY+8,14,0,Math.PI*2);c.fill();
+  c.fillStyle="#444";c.fillRect(kbX-8,kbY-8,16,14);
+  c.strokeStyle="#555";c.lineWidth=4;c.beginPath();c.arc(kbX,kbY-10,8,Math.PI,0);c.stroke();
+  gnd(c,W/2,cy+125);
+});
+
+reg(["stiff-leg deadlift","stiff leg deadlift","sldl"], (t,c,W,H)=>{
+  const s=(Math.sin(t*2.5)+1)/2,cy=H*.42,ang=s*.85;
+  const{sx,sy}=hinged(c,W/2,cy,ang);
+  const hY=cy+85*Math.sin(ang)+38;
+  limb(c,sx-12,sy+10,W/2-52,hY,AC,7); limb(c,sx+12,sy+10,W/2+52,hY,AC,7);
+  bar(c,W/2-80,hY-2,160,11); gnd(c,W/2,cy+125);
+});
+
+reg(["hip thrusts","hip thrust","glute bridges","glute bridge"], (t,c,W,H)=>{
+  const s=(Math.sin(t*2.5)+1)/2,cy=H*.58,lift=s*52;
+  // bench behind
+  c.fillStyle="#1e1e2a";c.fillRect(W/2-90,cy-lift-18,55,18);
+  // body
+  head(c,W/2-85,cy-lift-30);
+  limb(c,W/2-70,cy-lift-14,W/2+30,cy-lift,BC,10);
+  // hips thrust up
+  limb(c,W/2+30,cy-lift,W/2+30,cy,BC,9); limb(c,W/2-10,cy-lift,W/2-10,cy,BC,9);
+  limb(c,W/2+30,cy,W/2+55,cy+8,BC,8); limb(c,W/2-10,cy,W/2-35,cy+8,BC,8);
+  bar(c,W/2-20,cy-lift-8,80,9);
+  gnd(c,W/2,cy+12);
+});
+
+reg(["leg curls (lying)","lying leg curl"], (t,c,W,H)=>{
+  const s=(Math.sin(t*3)+1)/2,cy=H*.48;
+  head(c,W/2-100,cy-3);
+  limb(c,W/2-80,cy,W/2+60,cy,BC,10);
+  limb(c,W/2+60,cy,W/2+95,cy+5,BC,9);
+  const ang=s*1.25;
+  limb(c,W/2+30,cy+10,W/2+30-Math.sin(ang)*52,cy+10-Math.cos(ang)*52,BC,9);
+  limb(c,W/2+60,cy+10,W/2+60-Math.sin(ang)*52,cy+10-Math.cos(ang)*52,BC,9);
+  c.fillStyle="#7F77DD44";c.fillRect(W/2+30-Math.sin(ang)*52-10,cy+10-Math.cos(ang)*52-10,45,14);
+});
+
+reg(["standing calf raise","standing calf raises"], (t,c,W,H)=>{
+  const s=Math.sin(t*3.5),rise=((s+1)/2)*26,cy=H*.30-rise;
+  standing(c,W/2,cy-82,cy-82,cy,cy+65,cy+130);
+  gnd(c,W/2,cy+135);
+  c.fillStyle="#7F77DD33";c.fillRect(W/2-40,cy+125,80,rise+8);
+});
+
+reg(["seated calf raise","seated calf raises"], (t,c,W,H)=>{
+  const s=Math.sin(t*3.5),rise=((s+1)/2)*22,cy=H*.44;
+  head(c,W/2,cy-65); limb(c,W/2,cy-48,W/2,cy,BC,10);
+  c.fillStyle="#1e1e2a";c.fillRect(W/2-55,cy,110,18);
+  limb(c,W/2-20,cy,W/2-20,cy+50,BC,9); limb(c,W/2+20,cy,W/2+20,cy+50,BC,9);
+  // feet raise
+  gnd(c,W/2,cy+55);
+  c.fillStyle="#7F77DD33";c.fillRect(W/2-30,cy+48,60,rise+5);
+});
+
+reg(["donkey calf raise","donkey calf raises"], (t,c,W,H)=>{
+  const s=Math.sin(t*3.5),rise=((s+1)/2)*24,cy=H*.48;
+  const{sx,sy}=hinged(c,W/2,cy,.55);
+  c.fillStyle="#1e1e2a";c.fillRect(W/2-50,cy+60,60,14);
+  limb(c,sx-10,sy+10,W/2-40,cy+60,AC,7); limb(c,sx+10,sy+10,W/2-40,cy+60,AC,7);
+  limb(c,W/2,cy,W/2-18,cy+60,BC,9); limb(c,W/2,cy,W/2+18,cy+60,BC,9);
+  gnd(c,W/2,cy+75);
+  c.fillStyle="#7F77DD33";c.fillRect(W/2-28,cy+65-rise,56,rise+8);
+});
+
+reg(["barbell curl","barbell curls"], (t,c,W,H)=>{
+  const s=Math.sin(t*3),cy=H*.41,ang=.2+((s+1)/2)*1.15;
+  standing(c,W/2,cy-80,cy-80,cy,cy+60,cy+140);
+  const ey=cy+14;
+  limb(c,W/2-34,ey,(W/2-34)-Math.cos(ang)*55,ey-Math.sin(ang)*55,AC,7);
+  limb(c,W/2+34,ey,(W/2+34)+Math.cos(ang)*55,ey-Math.sin(ang)*55,AC,7);
+  db(c,(W/2-34)-Math.cos(ang)*55-14,ey-Math.sin(ang)*55-6);
+  db(c,(W/2+34)+Math.cos(ang)*55+2,ey-Math.sin(ang)*55-6);
+});
+
+reg(["concentration curl","concentration curls"], (t,c,W,H)=>{
+  const s=Math.sin(t*3),cy=H*.5,ang=.2+((s+1)/2)*1.1;
+  head(c,W/2-10,cy-65); limb(c,W/2-10,cy-48,W/2-10,cy-5,BC,10);
+  limb(c,W/2-10,cy-5,W/2-40,cy+50,BC,9); limb(c,W/2-10,cy-5,W/2+30,cy+50,BC,9);
+  limb(c,W/2-40,cy+50,W/2-38,cy+95,BC,8); limb(c,W/2+30,cy+50,W/2+28,cy+95,BC,8);
+  limb(c,W/2-40,cy+50,W/2-40,cy+95,AC,7);
+  limb(c,W/2-40,cy+52,W/2-40-Math.cos(ang)*50,cy+52-Math.sin(ang)*50,AC,7);
+  db(c,W/2-40-Math.cos(ang)*50-14,cy+52-Math.sin(ang)*50-6);
+});
+
+reg(["hammer curl","hammer curls"], (t,c,W,H)=>{
+  const s=Math.sin(t*3),cy=H*.41,ang=.2+((s+1)/2)*1.15;
+  standing(c,W/2,cy-80,cy-80,cy,cy+60,cy+140);
+  const ey=cy+14;
+  limb(c,W/2-34,ey,(W/2-34)-Math.cos(ang)*55,ey-Math.sin(ang)*55,AC,7);
+  limb(c,W/2+34,ey,(W/2+34)+Math.cos(ang)*55,ey-Math.sin(ang)*55,AC,7);
+  db(c,(W/2-34)-Math.cos(ang)*55-14,ey-Math.sin(ang)*55-6);
+  db(c,(W/2+34)+Math.cos(ang)*55+2,ey-Math.sin(ang)*55-6);
+});
+
+reg(["overhead triceps extension","overhead tricep extension"], (t,c,W,H)=>{
+  const s=Math.sin(t*3),cy=H*.41,ang=.8+s*.6;
+  standing(c,W/2,cy-80,cy-80,cy,cy+60,cy+140);
+  limb(c,W/2-28,cy-42,W/2-28,cy-80,AC,7); limb(c,W/2+28,cy-42,W/2+28,cy-80,AC,7);
+  const lhx=W/2-28+Math.sin(ang)*45,lhy=cy-80+Math.cos(ang)*45;
+  limb(c,W/2-28,cy-80,lhx,lhy,AC,7);
+  db(c,lhx-14,lhy-6);
+});
+
+reg(["triceps pushdown (bar)","tricep pushdown (bar)","triceps pushdown"], (t,c,W,H)=>{
+  const s=Math.sin(t*3),cy=H*.41,hY=cy-10+48+s*32;
+  standing(c,W/2,cy-80,cy-80,cy,cy+60,cy+140);
+  cable(c,W/2,H*.02,W/2,cy-10);
+  limb(c,W/2-22,cy-10,W/2-22,hY,AC,7); limb(c,W/2+22,cy-10,W/2+22,hY,AC,7);
+  bar(c,W/2-36,hY-4,72,9);
+});
+
+reg(["close-grip bench press","close grip bench press"], (t,c,W,H)=>{
+  const s=Math.sin(t*3),cy=H*.5,a=.45+s*.38;
+  c.fillStyle="#1e1e2a";c.fillRect(W/2-85,cy+30,170,16);
+  standing(c,W/2,cy-55,cy-55,cy+20,cy+80,cy+160);
+  const lx=W/2-28,rx=W/2+28,ay=cy-25;
+  limb(c,lx,ay,lx-20*Math.cos(a),ay-42*Math.sin(a),AC,7);
+  limb(c,rx,ay,rx+20*Math.cos(a),ay-42*Math.sin(a),AC,7);
+  bar(c,W/2-82,ay-42*Math.sin(a)-8,164,12);
+});
+
+reg(["triceps pushdown (rope)","triceps pushdown rope"], (t,c,W,H)=>{
+  const s=Math.sin(t*3),cy=H*.41,hY=cy-10+48+s*32;
+  standing(c,W/2,cy-80,cy-80,cy,cy+60,cy+140);
+  cable(c,W/2,H*.02,W/2,cy-10);
+  limb(c,W/2-22,cy-10,W/2-22,hY,AC,7); limb(c,W/2+22,cy-10,W/2+22,hY,AC,7);
+  bar(c,W/2-36,hY-4,72,9);
+});
+
+reg(["plank","planks"], (t,c,W,H)=>{
+  const wb=Math.sin(t*7)*2.5,cy=H*.52;
+  head(c,W/2-102,cy-4+wb*.3);
+  limb(c,W/2-84,cy+wb,W/2+62,cy+wb,BC,11);
+  limb(c,W/2-55,cy+wb,W/2-68,cy+42,AC,7); limb(c,W/2+22,cy+wb,W/2+35,cy+42,AC,7);
+  limb(c,W/2+62,cy+wb,W/2+82,cy+6,BC,9);
+  gnd(c,W/2,cy+46);
+});
+
+reg(["dead bug"], (t,c,W,H)=>{
+  const s=Math.sin(t*2.5),cy=H*.52;
+  // lying on back, limbs alternate
+  head(c,W/2-80,cy-4);
+  limb(c,W/2-62,cy,W/2+50,cy,BC,10);
+  // opposite arm + leg extend
+  const ext=(s+1)/2;
+  limb(c,W/2-20,cy,W/2-20-50*ext,cy-40*ext,AC,7);
+  limb(c,W/2+20,cy,W/2+20+50*(1-ext),cy-40*(1-ext),BC,9);
+  limb(c,W/2+30,cy,W/2+30+20*ext,cy+55,BC,9);
+  limb(c,W/2-10,cy,W/2-10-20*(1-ext),cy+55,BC,9);
+  gnd(c,W/2,cy+60);
+});
+
+reg(["bird-dog","bird dog"], (t,c,W,H)=>{
+  const s=(Math.sin(t*2.5)+1)/2,cy=H*.46;
+  const{sx,sy}=hinged(c,W/2,cy,.15);
+  // opposite limb extension
+  limb(c,sx+10,sy+5,sx+10+70*s,sy+5-20*s,AC,7);
+  limb(c,W/2,cy,W/2-70*(1-s),cy+20*(1-s),BC,9);
+  limb(c,W/2,cy,W/2+20,cy+60,BC,9); limb(c,W/2+20,cy+60,W/2+15,cy+110,BC,8);
+  gnd(c,W/2,cy+115);
+});
+
+reg(["hanging leg raise","hanging leg raises"], (t,c,W,H)=>{
+  const s=(Math.sin(t*2.5)+1)/2,cy=H*.22;
+  standing(c,W/2,cy+12,cy+12,cy+80,cy+145,cy+215);
+  limb(c,W/2-26,cy+80,W/2-26,cy+80+s*(-35)+35,BC,9);
+  limb(c,W/2+26,cy+80,W/2+26,cy+80+s*(-35)+35,BC,9);
+  limb(c,W/2-52,cy+16,W/2-72,cy,AC,7); limb(c,W/2+52,cy+16,W/2+72,cy,AC,7);
+  bar(c,W/2-90,cy-5,180,14);
+  c.strokeStyle="#555";c.lineWidth=4;
+  c.beginPath();c.moveTo(W/2-90,cy-5);c.lineTo(W/2-90,H*.02);c.stroke();
+  c.beginPath();c.moveTo(W/2+90,cy-5);c.lineTo(W/2+90,H*.02);c.stroke();
+});
+
+reg(["ab wheel rollouts","ab wheel rollout","ab wheel"], (t,c,W,H)=>{
+  const s=(Math.sin(t*2)+1)/2,cy=H*.5,roll=s*70;
+  head(c,W/2-roll+2,cy-32-s*30);
+  limb(c,W/2-roll,cy-14-s*30,W/2+roll*.2,cy,BC,10);
+  limb(c,W/2-roll,cy-14-s*30,W/2-roll-30,cy-14-s*30+32,AC,7);
+  limb(c,W/2-roll,cy-14-s*30,W/2-roll+30,cy-14-s*30+32,AC,7);
+  c.fillStyle="#666";c.beginPath();c.arc(W/2-roll+(60+roll*.4),cy+5,12,0,Math.PI*2);c.fill();
+  c.fillStyle="#888";c.beginPath();c.arc(W/2-roll+(60+roll*.4),cy+5,5,0,Math.PI*2);c.fill();
+  gnd(c,W/2,cy+18);
+});
+
+reg(["russian twists","russian twist"], (t,c,W,H)=>{
+  const s=Math.sin(t*3),cy=H*.52,twist=s*.5;
+  head(c,W/2+twist*30,cy-58);
+  limb(c,W/2+twist*30,cy-40,W/2,cy-5,BC,10);
+  limb(c,W/2,cy-5,W/2-32,cy+40,BC,9); limb(c,W/2,cy-5,W/2+32,cy+40,BC,9);
+  limb(c,W/2-32,cy+40,W/2-38,cy+90,BC,8); limb(c,W/2+32,cy+40,W/2+38,cy+90,BC,8);
+  limb(c,W/2+twist*30,cy-40,W/2+twist*65,cy-38,AC,7);
+  c.fillStyle="#666";c.beginPath();c.arc(W/2+twist*65,cy-38,10,0,Math.PI*2);c.fill();
+  gnd(c,W/2,cy+95);
+});
+
+reg(["crunches","crunch"], (t,c,W,H)=>{
+  const s=(Math.sin(t*3)+1)/2,cy=H*.55,crunch=s*28;
+  // lying figure curling up
+  head(c,W/2-55,cy-3-crunch*.5);
+  limb(c,W/2-55,cy-crunch*.5,W/2+40,cy,BC,10);
+  // knees bent
+  limb(c,W/2+40,cy,W/2+40,cy+55,BC,9); limb(c,W/2+10,cy,W/2+10,cy+55,BC,9);
+  limb(c,W/2+40,cy+55,W/2+65,cy+55,BC,8); limb(c,W/2+10,cy+55,W/2+35,cy+55,BC,8);
+  // arms reaching forward
+  limb(c,W/2-30,cy-crunch*.4,W/2+20,cy-crunch*.8,AC,6);
+  gnd(c,W/2,cy+60);
+});
+
+reg(["cable woodchoppers","cable woodchopper","woodchoppers"], (t,c,W,H)=>{
+  const s=Math.sin(t*2.5),cy=H*.42,twist=s*.45;
+  standing(c,W/2,cy-80,cy-80,cy,cy+60,cy+140);
+  cable(c,10,20,W/2-60+twist*80,cy-30+s*40);
+  limb(c,W/2-38,cy-20,W/2-60+twist*80,cy-30+s*40,AC,7);
+  limb(c,W/2+38,cy-20,W/2-60+twist*80,cy-30+s*40,AC,7);
+  c.fillStyle=BC;c.beginPath();c.arc(W/2-60+twist*80,cy-30+s*40,7,0,Math.PI*2);c.fill();
+});
+
+reg(["clean and jerk","clean & jerk"], (t,c,W,H)=>{
+  const s=(Math.sin(t*1.8)+1)/2,cy=H*.42;
+  if(s<.5){
+    // clean phase: pull from floor
+    const ang=(1-s*2)*.7;
+    const{sx,sy}=hinged(c,W/2,cy,ang);
+    const hY=cy+60*Math.sin(ang)+(1-s*2)*30;
+    limb(c,sx-12,sy+10,W/2-50,hY,AC,7); limb(c,sx+12,sy+10,W/2+50,hY,AC,7);
+    bar(c,W/2-80,hY-2,160,12);
+  } else {
+    // jerk phase: bar overhead
+    const bY=cy-82-((s-.5)*2)*55;
+    standing(c,W/2,cy-82,cy-82,cy,cy+60,cy+140);
+    limb(c,W/2-52,cy-30,W/2-64,bY+8,AC,7); limb(c,W/2+52,cy-30,W/2+64,bY+8,AC,7);
+    bar(c,W/2-80,bY,160,11);
+  }
+  gnd(c,W/2,cy+125);
+});
+
+reg(["thrusters","thruster"], (t,c,W,H)=>{
+  const s=(Math.sin(t*2)+1)/2,cy=H*.38,hD=s*60,kF=s*16,hY=cy-hD*.12;
+  head(c,W/2,hY-78);
+  limb(c,W/2,hY-60,W/2,hY+hD*.18,BC,10);
+  limb(c,W/2,hY+hD*.18,W/2-36-kF,hY+hD*.18+58,BC,9);
+  limb(c,W/2,hY+hD*.18,W/2+36+kF,hY+hD*.18+58,BC,9);
+  joint(c,W/2-36-kF,hY+hD*.18+58); joint(c,W/2+36+kF,hY+hD*.18+58);
+  limb(c,W/2-36-kF,hY+hD*.18+58,W/2-24,hY+hD*.18+118,BC,8);
+  limb(c,W/2+36+kF,hY+hD*.18+58,W/2+24,hY+hD*.18+118,BC,8);
+  // bar pressed overhead at top
+  const bY=hY-60-(s*55);
+  limb(c,W/2-44,hY-52,W/2-56,bY+8,AC,7); limb(c,W/2+44,hY-52,W/2+56,bY+8,AC,7);
+  bar(c,W/2-78,bY,156,11);
+  gnd(c,W/2,hY+hD*.18+124);
+});
+
+reg(["snatch"], (t,c,W,H)=>{
+  const s=(Math.sin(t*1.8)+1)/2,cy=H*.42;
+  const ang=(1-s)*.9;
+  if(ang>0.3){
+    const{sx,sy}=hinged(c,W/2,cy,ang);
+    const hY=cy+70*Math.sin(ang)+(1-s)*40;
+    limb(c,sx-14,sy+8,W/2-52,hY,AC,7); limb(c,sx+14,sy+8,W/2+52,hY,AC,7);
+    bar(c,W/2-90,hY-2,180,12);
+  } else {
+    const bY=cy-82-(s*.9)*80;
+    standing(c,W/2,cy-82,cy-82,cy,cy+60,cy+140);
+    limb(c,W/2-64,cy-28,W/2-80,bY+8,AC,7); limb(c,W/2+64,cy-28,W/2+80,bY+8,AC,7);
+    bar(c,W/2-92,bY,184,11);
+  }
+  gnd(c,W/2,cy+126);
+});
+
+reg(["burpees","burpee"], (t,c,W,H)=>{
+  const phase=(t%(Math.PI*2))/(Math.PI*2);
+  const cy=H*.5;
+  if(phase<0.33){
+    // standing
+    standing(c,W/2,cy-80,cy-80,cy,cy+60,cy+140);
+  } else if(phase<0.66){
+    // plank
+    const wb=Math.sin(t*7)*1.5;
+    head(c,W/2-102,cy-4+wb*.3);
+    limb(c,W/2-84,cy+wb,W/2+62,cy+wb,BC,11);
+    limb(c,W/2-55,cy+wb,W/2-68,cy+42,AC,7); limb(c,W/2+22,cy+wb,W/2+35,cy+42,AC,7);
+    limb(c,W/2+62,cy+wb,W/2+82,cy+6,BC,9);
+    gnd(c,W/2,cy+46);
+  } else {
+    // jump up
+    const jump=Math.sin((phase-.66)/.34*Math.PI)*30;
+    standing(c,W/2,cy-80-jump,cy-80-jump,cy-jump,cy+60-jump,cy+140-jump);
+    limb(c,W/2-40,cy-60-jump,W/2-70,cy-90-jump,AC,6);
+    limb(c,W/2+40,cy-60-jump,W/2+70,cy-90-jump,AC,6);
+  }
+});
+
+reg(["treadmill run","treadmill"], (t,c,W,H)=>{
+  const cy=H*.36,lA=Math.sin(t*4.2)*.72,aA=Math.sin(t*4.2+Math.PI)*.52;
+  head(c,W/2,cy-82); limb(c,W/2,cy-64,W/2,cy,BC,10);
+  limb(c,W/2-38,cy-42,W/2-38-Math.cos(aA)*46,cy-42-Math.sin(aA)*38,AC,7);
+  limb(c,W/2+38,cy-42,W/2+38+Math.cos(-aA)*46,cy-42-Math.sin(-aA)*38,AC,7);
+  const lKx=W/2-24+Math.sin(lA)*40,lKy=cy+60-Math.abs(Math.cos(lA))*20;
+  limb(c,W/2-24,cy,lKx,lKy,BC,9); limb(c,lKx,lKy,lKx+Math.sin(lA)*18,lKy+50,BC,8); joint(c,lKx,lKy);
+  const rKx=W/2+24+Math.sin(-lA)*40,rKy=cy+60-Math.abs(Math.cos(lA))*20;
+  limb(c,W/2+24,cy,rKx,rKy,BC,9); limb(c,rKx,rKy,rKx+Math.sin(-lA)*18,rKy+50,BC,8); joint(c,rKx,rKy);
+  // treadmill belt
+  c.fillStyle="#1a1a22";c.fillRect(W/2-80,cy+112,160,14);
+  c.strokeStyle=AC+"44";c.lineWidth=1.5;
+  const beltOff=(t*30)%20;
+  for(let x=W/2-80+beltOff;x<W/2+80;x+=20){c.beginPath();c.moveTo(x,cy+112);c.lineTo(x,cy+126);c.stroke();}
+  gnd(c,W/2,cy+114);
+});
+
+reg(["elliptical","elliptical machine"], (t,c,W,H)=>{
+  const cy=H*.38,lA=Math.sin(t*2.5)*.6,aA=Math.sin(t*2.5+Math.PI)*.4;
+  head(c,W/2,cy-82); limb(c,W/2,cy-64,W/2,cy,BC,10);
+  // handles moving
+  limb(c,W/2-38,cy-42,W/2-38-Math.cos(aA)*38,cy-42-Math.sin(aA)*55,AC,7);
+  limb(c,W/2+38,cy-42,W/2+38+Math.cos(-aA)*38,cy-42-Math.sin(-aA)*55,AC,7);
+  // elliptical foot pedals
+  const lKx=W/2-24+Math.sin(lA)*35,lKy=cy+65+Math.cos(lA)*12;
+  limb(c,W/2-24,cy,lKx,lKy,BC,9); limb(c,lKx,lKy,lKx,lKy+30,BC,8);
+  const rKx=W/2+24+Math.sin(-lA)*35,rKy=cy+65+Math.cos(-lA)*12;
+  limb(c,W/2+24,cy,rKx,rKy,BC,9); limb(c,rKx,rKy,rKx,rKy+30,BC,8);
+  // machine rails
+  c.strokeStyle="#333";c.lineWidth=3;
+  c.beginPath();c.ellipse(W/2-24,cy+72,35,14,0,0,Math.PI*2);c.stroke();
+  c.beginPath();c.ellipse(W/2+24,cy+72,35,14,0,0,Math.PI*2);c.stroke();
+});
+
+reg(["rowing machine","row machine","indoor rowing"], (t,c,W,H)=>{
+  const s=Math.sin(t*2.5),cy=H*.5;
+  head(c,W/2,cy-68); limb(c,W/2,cy-50,W/2,cy-5,BC,10);
+  const ex=70+s*50;
+  limb(c,W/2-20,cy-30,W/2-20-ex,cy-28,AC,7); limb(c,W/2+20,cy-30,W/2+20-ex,cy-28,AC,7);
+  cable(c,0,cy-28,W/2-20-ex,cy-28);
+  c.fillStyle="#666";c.fillRect(W/2-30-ex-10,cy-35,14,16);
+  // rowing machine seat + rail
+  c.fillStyle="#1e1e2a";c.fillRect(W/2-20,cy-5,85,20);
+  c.fillStyle="#333";c.fillRect(W/2-25,cy+18,100,6);
+  c.fillStyle="#444";c.fillRect(W/2+50+s*15,cy+15,16,12);
+});
+
+reg(["stairmaster","stair master","stairmill"], (t,c,W,H)=>{
+  const cy=H*.36,lA=Math.sin(t*2.2)*.55;
+  head(c,W/2,cy-82); limb(c,W/2,cy-64,W/2,cy,BC,10);
+  limb(c,W/2-38,cy-42,W/2-52,cy-42,AC,7); limb(c,W/2+38,cy-42,W/2+52,cy-42,AC,7);
+  // stepping motion
+  const lKx=W/2-24,lKy=cy+60+Math.sin(lA)*18;
+  limb(c,W/2-24,cy,lKx,lKy,BC,9); limb(c,lKx,lKy,lKx+5,lKy+48,BC,8); joint(c,lKx,lKy);
+  const rKx=W/2+24,rKy=cy+60+Math.sin(-lA)*18;
+  limb(c,W/2+24,cy,rKx,rKy,BC,9); limb(c,rKx,rKy,rKx-5,rKy+48,BC,8); joint(c,rKx,rKy);
+  // stair steps
+  for(let i=0;i<5;i++){
+    const sx=W/2-55+i*22,sy=cy+108-i*12+(t*18%12);
+    c.fillStyle="#1e1e2a";c.fillRect(sx,sy,24,8);
+  }
+});
+
+reg(["stationary bike","stationary bicycle","spin bike","cycling"], (t,c,W,H)=>{
+  const cy=H*.42,crank=t*2.5;
+  head(c,W/2-5,cy-68); limb(c,W/2-5,cy-50,W/2-5,cy-5,BC,10);
+  // handlebar
+  limb(c,W/2-5,cy-38,W/2+45,cy-42,AC,7); limb(c,W/2+45,cy-42,W/2+60,cy-36,AC,6);
+  // seat post
+  c.fillStyle="#333";c.fillRect(W/2-20,cy-5,8,50);c.fillRect(W/2-30,cy-8,28,8);
+  // crank arms + pedals
+  const px1=W/2+28+Math.cos(crank)*28,py1=cy+85+Math.sin(crank)*18;
+  const px2=W/2+28+Math.cos(crank+Math.PI)*28,py2=cy+85+Math.sin(crank+Math.PI)*18;
+  limb(c,W/2+28,cy+85,px1,py1,AC,5); limb(c,W/2+28,cy+85,px2,py2,AC,5);
+  c.fillStyle="#666";c.fillRect(px1-8,py1-3,16,6);c.fillRect(px2-8,py2-3,16,6);
+  // legs pedalling
+  limb(c,W/2-10,cy+2,px1,py1,BC,9); limb(c,px1,py1,W/2+10,cy+2,BC,8);
+  limb(c,W/2-10,cy+2,px2,py2,BC,8); limb(c,px2,py2,W/2+5,cy+2,BC,8);
+  // wheel
+  c.strokeStyle="#333";c.lineWidth=3;c.beginPath();c.arc(W/2+28,cy+85,38,0,Math.PI*2);c.stroke();
+  gnd(c,W/2+28,cy+125);
+});
+
+/* Fallback generic curl for unrecognised exercises */
+const FALLBACK = (t,c,W,H)=>{
+  const s=Math.sin(t*3),cy=H*.41,ang=.2+((s+1)/2)*1.15;
+  standing(c,W/2,cy-80,cy-80,cy,cy+60,cy+140);
+  const ey=cy+14;
+  limb(c,W/2-34,ey,(W/2-34)-Math.cos(ang)*55,ey-Math.sin(ang)*55,AC,7);
+  limb(c,W/2+34,ey,(W/2+34)+Math.cos(ang)*55,ey-Math.sin(ang)*55,AC,7);
+  db(c,(W/2-34)-Math.cos(ang)*55-14,ey-Math.sin(ang)*55-6);
+  db(c,(W/2+34)+Math.cos(ang)*55+2,ey-Math.sin(ang)*55-6);
+};
+
+/* Exercise meta lookup — returns {muscles, phases, tip} */
+const META = {
+  "barbell bench press": {muscles:["chest","triceps","front delt"],phases:["lower","press"],tip:"Retract scapula, feet flat. Bar to lower chest."},
+  "dumbbell bench press": {muscles:["chest","triceps"],phases:["lower","press"],tip:"Control the descent. Full stretch at bottom."},
+  "incline barbell press": {muscles:["upper chest","triceps"],phases:["lower","press"],tip:"30–45° incline. Elbows at 45° from body."},
+  "incline dumbbell press": {muscles:["upper chest","triceps"],phases:["lower","press"],tip:"Squeeze at the top. Slow negative."},
+  "decline barbell press": {muscles:["lower chest","triceps"],phases:["lower","press"],tip:"Feet hooked in. Full ROM, bar to lower chest."},
+  "chest dips": {muscles:["lower chest","triceps","front delt"],phases:["lower","push"],tip:"Lean forward ~30°. Full depth each rep."},
+  "pec deck machine": {muscles:["chest","front delt"],phases:["open","close"],tip:"Elbows on pads. Full squeeze in the middle."},
+  "standard push-ups": {muscles:["chest","triceps","shoulders"],phases:["lower","push"],tip:"Body straight as a plank. Core tight."},
+  "diamond push-ups": {muscles:["triceps","chest"],phases:["lower","push"],tip:"Hands form diamond under chest. Elbows in."},
+  "military press (standing)": {muscles:["front delt","mid delt","triceps"],phases:["lower","press"],tip:"Press straight up. Brace core, no lower-back arch."},
+  "seated dumbbell press": {muscles:["front delt","mid delt","triceps"],phases:["lower","press"],tip:"Don't lock out fully. Keep tension on delts."},
+  "arnold press": {muscles:["all three delt heads"],phases:["lower","rotate","press"],tip:"Rotate wrists from pronated to supinated."},
+  "lateral raises (dumbbell)": {muscles:["mid delt"],phases:["lower","raise"],tip:"Lead with elbows. Slight forward lean."},
+  "face pulls (rope)": {muscles:["rear delt","rotator cuff"],phases:["extend","pull"],tip:"Pull to nose level, externally rotate."},
+  "upright rows": {muscles:["mid delt","traps","biceps"],phases:["lower","pull"],tip:"Bar/dumbbells to chin. Elbows lead."},
+  "dumbbell shrugs": {muscles:["trapezius"],phases:["lower","shrug"],tip:"Straight up, no rolling. Pause at the peak."},
+  "barbell shrugs": {muscles:["trapezius upper"],phases:["lower","shrug"],tip:"Heavy load, full extension, squeeze 1 sec."},
+  "conventional deadlift": {muscles:["hamstrings","glutes","lats","traps"],phases:["set","pull","lower"],tip:"Bar over mid-foot. Neutral spine. Drive through floor."},
+  "sumo deadlift": {muscles:["glutes","adductors","quads","lats"],phases:["set","pull","lower"],tip:"Wide stance, toes out. Chest tall, hips low."},
+  "pull-ups (wide grip)": {muscles:["lats","biceps","rhomboids"],phases:["hang","pull","lower"],tip:"Dead hang at bottom. Chin over bar at top."},
+  "chin-ups (close grip)": {muscles:["biceps","lats","rhomboids"],phases:["hang","pull","lower"],tip:"Supinated grip. Full ROM. Slow descent."},
+  "lat pulldown (wide)": {muscles:["lats","teres major"],phases:["up","pull"],tip:"Pull to upper chest. Slight lean back."},
+  "barbell row (overhand)": {muscles:["lats","rhomboids","biceps"],phases:["lower","row"],tip:"Hinge at hips, pull to navel. Elbows back."},
+  "bent-over row (underhand)": {muscles:["lats","biceps","rhomboids"],phases:["lower","row"],tip:"Supinated grip. Pull to lower abs."},
+  "one-arm dumbbell row": {muscles:["lats","rhomboids","rear delt"],phases:["lower","row"],tip:"Brace on bench. Pull elbow to ceiling."},
+  "seated cable row": {muscles:["lats","rhomboids","biceps"],phases:["extend","pull"],tip:"Don't round at the end. Squeeze mid-back."},
+  "hyperextensions": {muscles:["spinal erectors","glutes","hamstrings"],phases:["lower","extend"],tip:"Neutral spine at top. Control the descent."},
+  "barbell curls": {muscles:["biceps","brachialis"],phases:["lower","curl"],tip:"No swinging. Full extension at bottom."},
+  "dumbbell alternating curls": {muscles:["biceps","brachialis"],phases:["lower","curl"],tip:"Alternate sides. Supinate at the top."},
+  "hammer curls": {muscles:["brachialis","brachioradialis"],phases:["lower","curl"],tip:"Neutral grip throughout. Control descent."},
+  "triceps pushdown (rope)": {muscles:["triceps all heads"],phases:["up","push"],tip:"Pin elbows. Spread rope at full extension."},
+  "overhead triceps ext (db)": {muscles:["triceps long head"],phases:["raise","lower"],tip:"Elbows in. Lower behind head fully."},
+  "skull crushers (ez bar)": {muscles:["triceps long head"],phases:["lower","extend"],tip:"Upper arms vertical. Lower to forehead."},
+  "close-grip bench press": {muscles:["triceps","chest","front delt"],phases:["lower","press"],tip:"Hands shoulder-width. Elbows tucked."},
+  "tricep kickbacks (db)": {muscles:["triceps lateral head"],phases:["flex","extend"],tip:"Hinge over. Upper arm parallel. Full extension."},
+  "bench dips": {muscles:["triceps","chest"],phases:["lower","push"],tip:"Hips close to bench. Full depth."},
+  "barbell back squat": {muscles:["quads","glutes","hamstrings"],phases:["descend","ascend"],tip:"Knees track toes. Chest tall. Break parallel."},
+  "goblet squat": {muscles:["quads","glutes","core"],phases:["descend","ascend"],tip:"Dumbbell at chest. Elbows inside knees."},
+  "bulgarian split squats": {muscles:["quads","glutes","hip flexors"],phases:["descend","ascend"],tip:"Rear foot elevated. Front shin vertical."},
+  "leg press": {muscles:["quads","glutes"],phases:["push","return"],tip:"Don't lock knees at top. Full ROM."},
+  "leg extensions": {muscles:["quads"],phases:["lower","extend"],tip:"Pause at full extension. Controlled descent."},
+  "lying leg curls": {muscles:["hamstrings"],phases:["extend","curl"],tip:"Full range. Pause at peak contraction."},
+  "romanian deadlift (rdl)": {muscles:["hamstrings","glutes"],phases:["hinge","extend"],tip:"Hinge at hips. Bar close to legs."},
+  "walking lunges": {muscles:["quads","glutes","hamstrings"],phases:["step","lower","push"],tip:"Big step. Back knee to floor. Upright torso."},
+  "seated calf raises": {muscles:["soleus"],phases:["lower","raise"],tip:"Full stretch at bottom. Rise to full extension."},
+  "standing calf raises": {muscles:["gastrocnemius","soleus"],phases:["lower","raise"],tip:"Straight knees. Full stretch at bottom."},
+  "plank (standard)": {muscles:["core","shoulders","glutes"],phases:["hold"],tip:"Squeeze everything. No hip sag."},
+  "side plank": {muscles:["obliques","core"],phases:["hold"],tip:"Hips stacked. Don't let them drop."},
+  "hanging leg raises": {muscles:["lower abs","hip flexors"],phases:["lower","raise"],tip:"Dead hang. Raise legs to 90°. No swinging."},
+  "russian twists": {muscles:["obliques","core"],phases:["left","right"],tip:"Feet off floor. Rotate fully each side."},
+  "treadmill run (sprints)": {muscles:["quads","calves","glutes","core"],phases:["stride","push","flight"],tip:"Land midfoot. Relax shoulders. Arms at 90°."},
+  "preacher curl": {muscles:["biceps short head"],phases:["lower","curl"],tip:"Don't lock out at the bottom. Full squeeze at top."},
+  "preacher curls": {muscles:["biceps short head"],phases:["lower","curl"],tip:"Don't lock out at the bottom. Full squeeze at top."},
+  "dumbbell curl": {muscles:["biceps","brachialis"],phases:["lower","curl"],tip:"Supinate at the top. Control the descent."},
+  "dumbbell curls": {muscles:["biceps","brachialis"],phases:["lower","curl"],tip:"Supinate at the top. Control the descent."},
+  "21s": {muscles:["biceps","brachialis"],phases:["lower","mid","full"],tip:"7 reps bottom half, 7 top half, 7 full ROM. No rest."},
+  "tricep dips": {muscles:["triceps","chest"],phases:["lower","push"],tip:"Hips close to bench. Full depth each rep."},
+  "tricep dip": {muscles:["triceps","chest"],phases:["lower","push"],tip:"Hips close to bench. Full depth each rep."},
+  "skull crushers": {muscles:["triceps long head"],phases:["lower","extend"],tip:"Upper arms vertical. Lower to forehead slowly."},
+  "skull crusher": {muscles:["triceps long head"],phases:["lower","extend"],tip:"Upper arms vertical. Lower to forehead slowly."},
+  "kickbacks": {muscles:["triceps lateral head"],phases:["flex","extend"],tip:"Hinge over. Upper arm parallel to floor. Full extension."},
+  "kickback": {muscles:["triceps lateral head"],phases:["flex","extend"],tip:"Hinge over. Upper arm parallel to floor. Full extension."},
+  "barbell squat (back)": {muscles:["quads","glutes","hamstrings"],phases:["descend","ascend"],tip:"Bar on traps. Knees track toes. Break parallel."},
+  "barbell squat (front)": {muscles:["quads","core","glutes"],phases:["descend","ascend"],tip:"Elbows high. Upright torso. Knees forward."},
+  "battle ropes": {muscles:["shoulders","core","forearms","cardio"],phases:["wave","slam"],tip:"Hinge at hips, not waist. Drive from shoulders."},
+  "battle rope": {muscles:["shoulders","core","forearms","cardio"],phases:["wave","slam"],tip:"Hinge at hips, not waist. Drive from shoulders."},
+  "bench press (barbell)": {muscles:["chest","triceps","front delt"],phases:["lower","press"],tip:"Retract scapula, feet flat. Bar to lower chest."},
+  "bench press (dumbbell)": {muscles:["chest","triceps"],phases:["lower","press"],tip:"Control the descent. Full stretch at bottom."},
+  "incline bench press": {muscles:["upper chest","triceps"],phases:["lower","press"],tip:"30–45° incline. Elbows at 45° from body."},
+  "dips": {muscles:["triceps","chest","front delt"],phases:["lower","push"],tip:"Lean forward ~30° for chest. Stay upright for triceps."},
+  "chest press machine": {muscles:["chest","triceps"],phases:["lower","press"],tip:"Seat height so handles align with chest. Full ROM."},
+  "decline bench press": {muscles:["lower chest","triceps"],phases:["lower","press"],tip:"Feet hooked in. Full ROM, bar to lower chest."},
+  "push-ups": {muscles:["chest","triceps","shoulders"],phases:["lower","push"],tip:"Body straight as a plank. Core tight."},
+  "pushups": {muscles:["chest","triceps","shoulders"],phases:["lower","push"],tip:"Body straight as a plank. Core tight."},
+  "cable flyes": {muscles:["chest","front delt"],phases:["open","close"],tip:"Slight elbow bend. Arc with control."},
+  "cable flye": {muscles:["chest","front delt"],phases:["open","close"],tip:"Slight elbow bend. Arc with control."},
+  "cable crossover": {muscles:["chest","front delt"],phases:["open","close"],tip:"Cross hands at the bottom for peak contraction."},
+  "dumbbell flyes": {muscles:["chest"],phases:["open","close"],tip:"Keep a slight bend in elbows. Stretch at the bottom."},
+  "dumbbell flye": {muscles:["chest"],phases:["open","close"],tip:"Keep a slight bend in elbows. Stretch at the bottom."},
+  "pull-ups": {muscles:["lats","biceps","rhomboids"],phases:["hang","pull","lower"],tip:"Dead hang at bottom. Chin over bar at top."},
+  "pullup": {muscles:["lats","biceps","rhomboids"],phases:["hang","pull","lower"],tip:"Dead hang at bottom. Chin over bar at top."},
+  "pull-up": {muscles:["lats","biceps","rhomboids"],phases:["hang","pull","lower"],tip:"Dead hang at bottom. Chin over bar at top."},
+  "pull up": {muscles:["lats","biceps","rhomboids"],phases:["hang","pull","lower"],tip:"Dead hang at bottom. Chin over bar at top."},
+  "lat pulldown (narrow grip)": {muscles:["lats","biceps"],phases:["up","pull"],tip:"Pull to sternum. Elbows drive down and back."},
+  "chin-ups": {muscles:["biceps","lats","rhomboids"],phases:["hang","pull","lower"],tip:"Supinated grip. Full ROM. Slow descent."},
+  "chinup": {muscles:["biceps","lats"],phases:["hang","pull","lower"],tip:"Supinated grip. Full ROM. Slow descent."},
+  "lat pulldown (wide grip)": {muscles:["lats","teres major"],phases:["up","pull"],tip:"Pull to upper chest. Slight lean back."},
+  "chest-supported row": {muscles:["lats","rhomboids","rear delt"],phases:["lower","row"],tip:"Chest on pad eliminates lower back. Full ROM."},
+  "t-bar row": {muscles:["lats","rhomboids","biceps"],phases:["lower","row"],tip:"Chest against pad. Full ROM. Control negatives."},
+  "t bar row": {muscles:["lats","rhomboids","biceps"],phases:["lower","row"],tip:"Chest against pad. Full ROM. Control negatives."},
+  "deadlift": {muscles:["hamstrings","glutes","lats","traps","spinal erectors"],phases:["set","pull","lower"],tip:"Bar over mid-foot. Neutral spine. Drive through floor."},
+  "deadlifts": {muscles:["hamstrings","glutes","lats","traps"],phases:["set","pull","lower"],tip:"Bar over mid-foot. Neutral spine. Drive through floor."},
+  "rack pulls": {muscles:["traps","lats","spinal erectors"],phases:["set","pull"],tip:"Set just below the knee. Brace hard. Drive hips through."},
+  "rack pull": {muscles:["traps","lats","spinal erectors"],phases:["set","pull"],tip:"Set just below the knee. Brace hard. Drive hips through."},
+  "overhead press (military press)": {muscles:["front delt","mid delt","triceps"],phases:["lower","press"],tip:"Press straight up. Brace core, no lower-back arch."},
+  "push press": {muscles:["front delt","triceps","quads"],phases:["dip","drive","press"],tip:"Slight knee dip, then drive with legs to initiate press."},
+  "overhead press": {muscles:["front delt","mid delt","triceps"],phases:["lower","press"],tip:"Press straight up. Brace core, no lower-back arch."},
+  "front raise": {muscles:["front delt"],phases:["lower","raise"],tip:"Raise to shoulder height. Control descent. No swinging."},
+  "front raises": {muscles:["front delt"],phases:["lower","raise"],tip:"Raise to shoulder height. Control descent. No swinging."},
+  "face pulls": {muscles:["rear delt","rotator cuff"],phases:["extend","pull"],tip:"Pull to nose level, externally rotate at end."},
+  "face pull": {muscles:["rear delt","rotator cuff"],phases:["extend","pull"],tip:"Pull to nose level, externally rotate at end."},
+  "rear delt fly": {muscles:["rear delt","rhomboids"],phases:["close","open"],tip:"Slight forward lean. Lead with elbows, not hands."},
+  "lateral raise": {muscles:["mid delt"],phases:["lower","raise"],tip:"Lead with elbows. Slight forward lean. Stop at shoulder height."},
+  "lateral raises": {muscles:["mid delt"],phases:["lower","raise"],tip:"Lead with elbows. Slight forward lean. Stop at shoulder height."},
+  "reverse pec deck": {muscles:["rear delt","rhomboids"],phases:["close","open"],tip:"Squeeze at full extension. Don't over-reach."},
+  "hack squat": {muscles:["quads","glutes"],phases:["descend","ascend"],tip:"Feet shoulder-width on platform. Full depth. Controlled ascent."},
+  "lunges": {muscles:["quads","glutes","hamstrings"],phases:["step","lower","push"],tip:"Big step. Back knee to floor. Upright torso."},
+  "lunge": {muscles:["quads","glutes","hamstrings"],phases:["step","lower","push"],tip:"Big step. Back knee to floor. Upright torso."},
+  "leg curls (seated)": {muscles:["hamstrings"],phases:["extend","curl"],tip:"Toes pointed. Full extension at bottom."},
+  "seated leg curl": {muscles:["hamstrings"],phases:["extend","curl"],tip:"Toes pointed. Full extension at bottom."},
+  "kettlebell swings": {muscles:["glutes","hamstrings","core","shoulders"],phases:["hinge","drive","float"],tip:"Hinge at hips, not squat. Power from glutes."},
+  "kettlebell swing": {muscles:["glutes","hamstrings","core","shoulders"],phases:["hinge","drive","float"],tip:"Hinge at hips, not squat. Power from glutes."},
+  "stiff-leg deadlift": {muscles:["hamstrings","glutes","spinal erectors"],phases:["hinge","extend"],tip:"Minimal knee bend. Feel stretch in hamstrings."},
+  "stiff leg deadlift": {muscles:["hamstrings","glutes"],phases:["hinge","extend"],tip:"Minimal knee bend. Feel stretch in hamstrings."},
+  "sldl": {muscles:["hamstrings","glutes"],phases:["hinge","extend"],tip:"Minimal knee bend. Bar stays close to legs."},
+  "hip thrusts": {muscles:["glutes","hamstrings"],phases:["lower","thrust"],tip:"Bar on hip crease. Squeeze glutes hard at the top."},
+  "hip thrust": {muscles:["glutes","hamstrings"],phases:["lower","thrust"],tip:"Bar on hip crease. Squeeze glutes hard at the top."},
+  "glute bridges": {muscles:["glutes","hamstrings"],phases:["lower","bridge"],tip:"Feet flat. Drive through heels. Squeeze at top."},
+  "glute bridge": {muscles:["glutes","hamstrings"],phases:["lower","bridge"],tip:"Feet flat. Drive through heels. Squeeze at top."},
+  "leg curls (lying)": {muscles:["hamstrings"],phases:["extend","curl"],tip:"Full range. Pause at peak contraction."},
+  "lying leg curl": {muscles:["hamstrings"],phases:["extend","curl"],tip:"Full range. Pause at peak contraction."},
+  "standing calf raise": {muscles:["gastrocnemius","soleus"],phases:["lower","raise"],tip:"Straight knees. Full stretch at bottom."},
+  "standing calf raises": {muscles:["gastrocnemius","soleus"],phases:["lower","raise"],tip:"Straight knees. Full stretch at bottom."},
+  "seated calf raise": {muscles:["soleus"],phases:["lower","raise"],tip:"Knees bent targets soleus. Full stretch at bottom."},
+  "seated calf raises": {muscles:["soleus"],phases:["lower","raise"],tip:"Knees bent targets soleus. Full stretch at bottom."},
+  "donkey calf raise": {muscles:["gastrocnemius"],phases:["lower","raise"],tip:"Hip hinge position increases stretch. Full ROM."},
+  "donkey calf raises": {muscles:["gastrocnemius"],phases:["lower","raise"],tip:"Hip hinge position increases stretch. Full ROM."},
+  "barbell curl": {muscles:["biceps","brachialis"],phases:["lower","curl"],tip:"No swinging. Full extension at bottom."},
+  "barbell curls": {muscles:["biceps","brachialis"],phases:["lower","curl"],tip:"No swinging. Full extension at bottom."},
+  "concentration curl": {muscles:["biceps"],phases:["lower","curl"],tip:"Elbow on inner knee. Peak contraction at top."},
+  "concentration curls": {muscles:["biceps"],phases:["lower","curl"],tip:"Elbow on inner knee. Peak contraction at top."},
+  "hammer curl": {muscles:["brachialis","brachioradialis"],phases:["lower","curl"],tip:"Neutral grip throughout. Control descent."},
+  "hammer curls": {muscles:["brachialis","brachioradialis"],phases:["lower","curl"],tip:"Neutral grip throughout. Control descent."},
+  "overhead triceps extension": {muscles:["triceps long head"],phases:["raise","lower"],tip:"Elbows in. Lower behind head fully."},
+  "overhead tricep extension": {muscles:["triceps long head"],phases:["raise","lower"],tip:"Elbows in. Lower behind head fully."},
+  "triceps pushdown (bar)": {muscles:["triceps lateral head"],phases:["up","push"],tip:"Elbows locked at sides. Full lockout."},
+  "tricep pushdown (bar)": {muscles:["triceps lateral head"],phases:["up","push"],tip:"Elbows locked at sides. Full lockout."},
+  "triceps pushdown": {muscles:["triceps all heads"],phases:["up","push"],tip:"Pin elbows. Full lockout at bottom."},
+  "close-grip bench press": {muscles:["triceps","chest","front delt"],phases:["lower","press"],tip:"Hands shoulder-width. Elbows tucked."},
+  "close grip bench press": {muscles:["triceps","chest","front delt"],phases:["lower","press"],tip:"Hands shoulder-width. Elbows tucked."},
+  "triceps pushdown (rope)": {muscles:["triceps all heads"],phases:["up","push"],tip:"Pin elbows. Spread rope at full extension."},
+  "triceps pushdown rope": {muscles:["triceps all heads"],phases:["up","push"],tip:"Pin elbows. Spread rope at full extension."},
+  "plank": {muscles:["core","shoulders","glutes"],phases:["hold"],tip:"Squeeze everything. No hip sag or piking."},
+  "planks": {muscles:["core","shoulders","glutes"],phases:["hold"],tip:"Squeeze everything. No hip sag or piking."},
+  "dead bug": {muscles:["core","transverse abdominis"],phases:["extend","return"],tip:"Press lower back into floor throughout. Breathe out on extend."},
+  "bird-dog": {muscles:["core","glutes","spinal erectors"],phases:["extend","return"],tip:"Neutral spine. Don't let hips rotate."},
+  "bird dog": {muscles:["core","glutes","spinal erectors"],phases:["extend","return"],tip:"Neutral spine. Don't let hips rotate."},
+  "hanging leg raise": {muscles:["lower abs","hip flexors"],phases:["lower","raise"],tip:"Dead hang. Raise legs to 90°. No swinging."},
+  "hanging leg raises": {muscles:["lower abs","hip flexors"],phases:["lower","raise"],tip:"Dead hang. Raise legs to 90°. No swinging."},
+  "ab wheel rollouts": {muscles:["core","lats","shoulders"],phases:["roll out","pull back"],tip:"Hips locked. Don't collapse lower back."},
+  "ab wheel rollout": {muscles:["core","lats","shoulders"],phases:["roll out","pull back"],tip:"Hips locked. Don't collapse lower back."},
+  "ab wheel": {muscles:["core","lats","shoulders"],phases:["roll out","pull back"],tip:"Hips locked. Don't collapse lower back."},
+  "russian twists": {muscles:["obliques","core"],phases:["left","right"],tip:"Feet off floor. Rotate fully each side."},
+  "russian twist": {muscles:["obliques","core"],phases:["left","right"],tip:"Feet off floor. Rotate fully each side."},
+  "crunches": {muscles:["rectus abdominis"],phases:["lower","crunch"],tip:"Curl spine up, not just head. Exhale at top."},
+  "crunch": {muscles:["rectus abdominis"],phases:["lower","crunch"],tip:"Curl spine up, not just head. Exhale at top."},
+  "cable woodchoppers": {muscles:["obliques","core","shoulders"],phases:["high","low"],tip:"Rotate through torso, not just arms. Brace core."},
+  "cable woodchopper": {muscles:["obliques","core"],phases:["high","low"],tip:"Rotate through torso, not just arms."},
+  "woodchoppers": {muscles:["obliques","core"],phases:["high","low"],tip:"Rotate through torso. Keep arms extended."},
+  "clean and jerk": {muscles:["full body","quads","glutes","lats","shoulders"],phases:["pull","catch","jerk"],tip:"Bar path stays close. Explosive second pull. Split or squat jerk."},
+  "clean & jerk": {muscles:["full body","quads","glutes","lats","shoulders"],phases:["pull","catch","jerk"],tip:"Bar path stays close. Explosive second pull."},
+  "thrusters": {muscles:["quads","glutes","shoulders","triceps"],phases:["squat","drive","press"],tip:"Use leg drive to initiate the press. One fluid motion."},
+  "thruster": {muscles:["quads","glutes","shoulders","triceps"],phases:["squat","drive","press"],tip:"Use leg drive to initiate the press. One fluid motion."},
+  "snatch": {muscles:["full body","hamstrings","glutes","lats","shoulders"],phases:["pull","transition","catch"],tip:"Wide grip. Bar stays close. Aggressive hip extension."},
+  "burpees": {muscles:["full body","chest","quads","core","cardio"],phases:["squat","plank","jump"],tip:"Chest to floor. Explosive jump. Arms overhead."},
+  "burpee": {muscles:["full body","chest","quads","core"],phases:["squat","plank","jump"],tip:"Chest to floor. Explosive jump. Arms overhead."},
+  "treadmill run": {muscles:["quads","calves","glutes","core"],phases:["stride","push"],tip:"Land midfoot. Relax shoulders. Consistent pace."},
+  "treadmill": {muscles:["quads","calves","glutes"],phases:["stride","push"],tip:"Land midfoot. Relax shoulders. Arms at 90°."},
+  "elliptical": {muscles:["quads","glutes","calves","shoulders"],phases:["push","pull"],tip:"Use the handles. Maintain upright posture. Full ROM."},
+  "elliptical machine": {muscles:["quads","glutes","calves","shoulders"],phases:["push","pull"],tip:"Use the handles. Maintain upright posture."},
+  "rowing machine": {muscles:["lats","glutes","hamstrings","core","biceps"],phases:["drive","finish","recover"],tip:"Legs then hips then arms on drive. Reverse on recovery."},
+  "row machine": {muscles:["lats","glutes","hamstrings","core"],phases:["drive","finish","recover"],tip:"Legs then hips then arms on drive."},
+  "indoor rowing": {muscles:["lats","glutes","hamstrings","core"],phases:["drive","finish","recover"],tip:"Legs then hips then arms. 60% legs, 20% hips, 20% arms."},
+  "stairmaster": {muscles:["quads","glutes","calves","cardio"],phases:["step","push"],tip:"Don't lean on rails. Drive through heel. Upright posture."},
+  "stair master": {muscles:["quads","glutes","calves"],phases:["step","push"],tip:"Don't lean on rails. Drive through heel."},
+  "stairmill": {muscles:["quads","glutes","calves"],phases:["step","push"],tip:"Don't lean on rails. Drive through heel."},
+  "stationary bike": {muscles:["quads","hamstrings","glutes","calves"],phases:["push","pull"],tip:"Seat at hip height. Push and pull through full pedal stroke."},
+  "stationary bicycle": {muscles:["quads","hamstrings","glutes","calves"],phases:["push","pull"],tip:"Seat at hip height. Pedal in smooth circles."},
+  "spin bike": {muscles:["quads","hamstrings","glutes","calves"],phases:["push","pull"],tip:"Engage core. Vary cadence and resistance."},
+  "cycling": {muscles:["quads","hamstrings","glutes","calves"],phases:["push","pull"],tip:"Smooth pedal stroke. Keep knees tracking over feet."},
+};
+
+/* ── Modal open/close ── */
+let animRAF = null;
+let animT   = 0;
+
+function openExModal(name) {
+  const key = name.toLowerCase().trim();
+  const fn  = ANIMS[key] || FALLBACK;
+  const meta = META[key] || { muscles: [], phases: ["move"], tip: "Focus on form and control through the full range of motion." };
+
+  document.getElementById('modalTitle').textContent = name;
+
+  const mEl = document.getElementById('modalMuscles');
+  mEl.innerHTML = meta.muscles.map(m => `<span class="muscle-tag">${m}</span>`).join('');
+
+  const pEl = document.getElementById('modalPills');
+  pEl.innerHTML = meta.phases.map((ph,i) => `<span class="phase-pill" id="mpill${i}">${ph}</span>`).join('');
+
+  document.getElementById('modalTip').innerHTML = `<strong>Tip:</strong> ${meta.tip}`;
+
+  const modal = document.getElementById('exModal');
+  modal.classList.add('open');
+  document.body.style.overflow = 'hidden';
+
+  const canvas = document.getElementById('exCanvas');
+  const wrap   = document.getElementById('modalCanvasWrap');
+  const W = Math.min(wrap.clientWidth - 0, 460);
+  const H = 240;
+  canvas.width  = W;
+  canvas.height = H;
+  canvas.style.width  = W + 'px';
+  canvas.style.height = H + 'px';
+  const ctx = canvas.getContext('2d');
+
+  if (animRAF) cancelAnimationFrame(animRAF);
+  animT = 0;
+
+  function loop() {
+    animT += .032;
+    ctx.clearRect(0, 0, W, H);
+
+    const phaseCount = meta.phases.length;
+    const pi = Math.min(Math.floor(((Math.sin(animT * 2.5) + 1) / 2) * phaseCount), phaseCount - 1);
+    meta.phases.forEach((_, i) => {
+      const el = document.getElementById(`mpill${i}`);
+      if (el) el.className = 'phase-pill' + (i === pi ? ' active' : '');
+    });
+
+    fn(animT, ctx, W, H);
+    animRAF = requestAnimationFrame(loop);
+  }
+  loop();
+}
+
+function closeExModal() {
+  document.getElementById('exModal').classList.remove('open');
+  document.body.style.overflow = '';
+  if (animRAF) { cancelAnimationFrame(animRAF); animRAF = null; }
+}
+
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeExModal(); });
+</script>
+{% endblock %}

@@ -1,0 +1,84 @@
+{% extends 'base.html' %}
+{% block title %}Member Detail - GymFit Pro{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <a href="{% url 'owner_dashboard' %}" class="btn-back-page"><i class="fas fa-arrow-left"></i> Back</a>
+    <h1 class="page-title">{{ member.get_full_name|default:member.username }}</h1>
+</div>
+
+<div class="member-detail-grid">
+    <div class="dash-card">
+        <div class="dash-card-header"><h3><i class="fas fa-user"></i> Member Info</h3></div>
+        <div class="member-info-list">
+            <div class="info-row"><span>Email</span><strong>{{ member.email }}</strong></div>
+            <div class="info-row"><span>Joined</span><strong>{{ member_profile.date_joined|date:"F d, Y" }}</strong></div>
+            <div class="info-row"><span>Membership</span>
+                <span class="badge-status badge-{{ member_profile.membership_status }}">{{ member_profile.get_membership_status_display }}</span>
+            </div>
+            <div class="info-row"><span>Face ID</span>
+                <span class="badge-status {% if member_profile.face_registered %}badge-active{% else %}badge-expired{% endif %}">
+                    {% if member_profile.face_registered %}Registered{% else %}Not Registered{% endif %}
+                </span>
+            </div>
+            {% if member_profile.phone %}<div class="info-row"><span>Phone</span><strong>{{ member_profile.phone }}</strong></div>{% endif %}
+        </div>
+        <a href="{% url 'update_payment' member.id %}" class="btn-face btn-capture" style="display:block;text-align:center;margin-top:1rem;">
+            <i class="fas fa-credit-card"></i> Update Payment
+        </a>
+    </div>
+
+    <div class="dash-card">
+        <div class="dash-card-header"><h3><i class="fas fa-credit-card"></i> Payment History</h3></div>
+        <table class="data-table">
+            <thead><tr><th>Plan</th><th>Status</th><th>Paid</th><th>Expires</th></tr></thead>
+            <tbody>
+                {% for pay in payments %}
+                <tr>
+                    <td>{{ pay.get_plan_display }}</td>
+                    <td><span class="badge-status badge-{{ pay.status }}">{{ pay.get_status_display }}</span></td>
+                    <td>{% if pay.payment_date %}{{ pay.payment_date|date:"M d, Y" }}{% else %}—{% endif %}</td>
+                    <td>
+                        {% if pay.expiry_date %}
+                        <span class="{% if pay.is_expired %}text-danger{% endif %}">{{ pay.expiry_date|date:"M d, Y" }}</span>
+                        {% else %}—{% endif %}
+                    </td>
+                </tr>
+                {% empty %}<tr><td colspan="4" class="text-center">No payments.</td></tr>{% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="dash-card">
+        <div class="dash-card-header"><h3><i class="fas fa-calendar-check"></i> Recent Attendance</h3></div>
+        <table class="data-table">
+            <thead><tr><th>Date</th><th>Time In</th><th>Method</th></tr></thead>
+            <tbody>
+                {% for att in attendance_records %}
+                <tr>
+                    <td>{{ att.date|date:"M d, Y" }}</td>
+                    <td>{{ att.time_in|time:"h:i A" }}</td>
+                    <td><span class="badge-method">{{ att.get_login_method_display }}</span></td>
+                </tr>
+                {% empty %}<tr><td colspan="3" class="text-center">No attendance records.</td></tr>{% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="dash-card">
+        <div class="dash-card-header"><h3><i class="fas fa-dumbbell"></i> Workout Plan</h3></div>
+        {% for wd in workouts %}
+        <div class="workout-summary">
+            <strong>{{ wd.day }}</strong> — {{ wd.muscle_group }}
+            {% if not wd.is_rest_day %}
+            <ul class="ex-mini-list">
+                {% for ex in wd.exercises.all %}
+                <li>{{ ex.name }} — {{ ex.sets }}×{{ ex.reps }}</li>
+                {% endfor %}
+            </ul>
+            {% else %}<em> (Rest Day)</em>{% endif %}
+        </div>
+        {% empty %}<p class="text-center">No workout plan assigned.</p>{% endfor %}
+    </div>
+</div>
+{% endblock %}

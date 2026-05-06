@@ -1,0 +1,86 @@
+{% extends 'base.html' %}
+
+{% block title %}
+Announcements
+{% endblock %}
+
+{% block content %}
+
+<div class="page-header">
+
+    <h1>📢 Announcements</h1>
+
+    {% if request.user.profile.is_owner %}
+    <a href="{% url 'create_announcement' %}"
+       class="btn btn-danger">
+
+        + Create Announcement
+
+    </a>
+    {% endif %}
+
+</div>
+
+<hr>
+
+{% for ann in announcements %}
+
+<div class="card mb-3">
+
+    <div class="card-body">
+
+        <h4>
+            {{ ann.title }}
+        </h4>
+
+        <p>
+            {{ ann.body }}
+        </p>
+
+        <small>
+            {{ ann.get_priority_display }}
+            • {{ ann.created_at|date:"M d, Y h:i A" }}
+        </small>
+
+        {% if request.user.profile.is_owner %}
+
+        <div style="margin-top:10px;">
+
+            <a href="{% url 'edit_announcement' ann.pk %}"
+               class="btn btn-warning btn-sm">
+
+                Edit
+
+            </a>
+
+            <form method="POST"
+                  action="{% url 'delete_announcement' ann.pk %}"
+                  style="display:inline;">
+
+                {% csrf_token %}
+
+                <button
+                    type="submit"
+                    class="btn btn-danger btn-sm">
+
+                    Delete
+
+                </button>
+
+            </form>
+
+        </div>
+
+        {% endif %}
+
+    </div>
+
+</div>
+
+{% empty %}
+
+<p>No announcements available.</p>
+
+{% endfor %}
+
+{% endblock %}

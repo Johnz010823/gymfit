@@ -1,0 +1,100 @@
+{% extends 'base.html' %}
+
+{% block title %}
+{{ action }} Announcement
+{% endblock %}
+
+{% block content %}
+
+<div class="container">
+
+    <h2>
+        📢 {{ action }} Announcement
+    </h2>
+
+    <form method="POST">
+
+        {% csrf_token %}
+
+        <div class="form-group">
+
+            <label>Title</label>
+
+            <input
+                type="text"
+                name="title"
+                class="form-control"
+                value="{{ ann.title|default:'' }}"
+                required
+            >
+
+        </div>
+
+        <br>
+
+        <div class="form-group">
+
+            <label>Message</label>
+
+            <textarea
+                name="body"
+                class="form-control"
+                rows="5"
+                required
+            >{{ ann.body|default:'' }}</textarea>
+
+        </div>
+
+        <br>
+
+        <div class="form-group">
+
+            <label>Priority</label>
+
+            <select name="priority" class="form-control">
+
+                <option value="low">🟢 Low</option>
+                <option value="normal">🔵 Normal</option>
+                <option value="high">🟠 High</option>
+                <option value="urgent">🔴 Urgent</option>
+
+            </select>
+
+        </div>
+
+        <br>
+
+        <div class="form-group">
+
+            <label>Expires At (optional)</label>
+
+            <input
+                type="datetime-local"
+                name="expires_at"
+                class="form-control"
+            >
+
+        </div>
+
+        <br>
+
+        <button
+            type="submit"
+            class="btn btn-success">
+
+            Save Announcement
+
+        </button>
+
+        <a href="{% url 'announcements' %}"
+           class="btn btn-secondary">
+
+           Cancel
+
+        </a>
+
+    </form>
+
+</div>
+
+{% endblock %}

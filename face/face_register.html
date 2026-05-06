@@ -1,0 +1,134 @@
+{% extends 'base.html' %}
+{% block title %}Face Registration - GymFit Pro{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-title">Face Registration</h1>
+    <span class="page-subtitle">Register your face for quick gym check-in</span>
+</div>
+
+<div class="face-container">
+    <div class="face-card">
+        {% if profile.face_registered %}
+        <div class="face-status registered">
+            <i class="fas fa-check-circle"></i>
+            <h3>Face Already Registered</h3>
+            <p>Your face is registered. You can update it below.</p>
+        </div>
+        {% endif %}
+
+        <div class="camera-wrapper">
+            <video id="video" autoplay playsinline class="camera-feed"></video>
+            <canvas id="canvas" class="hidden"></canvas>
+            <div class="camera-overlay">
+                <div class="face-guide"></div>
+                <div class="scan-line-anim" id="scanAnim"></div>
+            </div>
+            <div class="camera-placeholder" id="cameraPlaceholder">
+                <i class="fas fa-camera"></i>
+                <p>Camera not started</p>
+            </div>
+        </div>
+
+        <div class="face-instructions">
+            <h4>Instructions:</h4>
+            <ul>
+                <li><i class="fas fa-check"></i> Ensure good lighting</li>
+                <li><i class="fas fa-check"></i> Face the camera directly</li>
+                <li><i class="fas fa-check"></i> Remove glasses if possible</li>
+                <li><i class="fas fa-check"></i> Keep face within the guide circle</li>
+            </ul>
+        </div>
+
+        <div class="face-controls">
+            <button class="btn-face btn-start" id="startBtn" onclick="startCamera()">
+                <i class="fas fa-camera"></i> Start Camera
+            </button>
+            <button class="btn-face btn-capture hidden" id="captureBtn" onclick="captureAndRegister()">
+                <i class="fas fa-user-plus"></i> Register Face
+            </button>
+            <button class="btn-face btn-stop hidden" id="stopBtn" onclick="stopCamera()">
+                <i class="fas fa-stop"></i> Stop
+            </button>
+        </div>
+
+        <div id="statusMsg" class="status-message hidden"></div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let stream = null;
+
+async function startCamera() {
+    try {
+        stream = await navigator.mediaDevices.getUserMedia({ video: { width: 640, height: 480, facingMode: 'user' } });
+        const video = document.getElementById('video');
+        video.srcObject = stream;
+        document.getElementById('cameraPlaceholder').style.display = 'none';
+        document.getElementById('startBtn').classList.add('hidden');
+        document.getElementById('captureBtn').classList.remove('hidden');
+        document.getElementById('stopBtn').classList.remove('hidden');
+        document.getElementById('scanAnim').style.display = 'block';
+    } catch(err) {
+        showStatus('error', 'Could not access camera: ' + err.message);
+    }
+}
+
+function stopCamera() {
+    if (stream) { stream.getTracks().forEach(t => t.stop()); stream = null; }
+    document.getElementById('video').srcObject = null;
+    document.getElementById('cameraPlaceholder').style.display = 'flex';
+    document.getElementById('startBtn').classList.remove('hidden');
+    document.getElementById('captureBtn').classList.add('hidden');
+    document.getElementById('stopBtn').classList.add('hidden');
+    document.getElementById('scanAnim').style.display = 'none';
+}
+
+async function captureAndRegister() {
+    const video = document.getElementById('video');
+    const canvas = document.getElementById('canvas');
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    canvas.getContext('2d').drawImage(video, 0, 0);
+    const imageData = canvas.toDataURL('image/jpeg', 0.8);
+
+    const btn = document.getElementById('captureBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+
+    try {
+        const res = await fetch('{% url "face_register_submit" %}', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },
+            body: JSON.stringify({ image: imageData })
+        });
+        const data = await res.json();
+        if (data.success) {
+            showStatus('success', data.message);
+            stopCamera();
+            setTimeout(() => window.location.href = '/dashboard/', 2000);
+        } else {
+            showStatus('error', data.error);
+        }
+    } catch(e) {
+        showStatus('error', 'Network error. Please try again.');
+    }
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fas fa-user-plus"></i> Register Face';
+}
+
+function showStatus(type, msg) {
+    const el = document.getElementById('statusMsg');
+    el.className = `status-message status-${type}`;
+    el.textContent = msg;
+    el.classList.remove('hidden');
+}
+
+function getCookie(name) {
+    let v = document.cookie.match('(^|;) ?' + name + '=([^;]*)(;|$)');
+    return v ? v[2] : null;
+}
+</script>
+{% endblock %}

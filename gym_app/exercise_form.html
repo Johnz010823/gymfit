@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<div class="form-card">
+
+<h2>Add / Edit Exercise</h2>
+
+<form method="POST">
+
+{% csrf_token %}
+
+{{ form.as_p }}
+
+<button type="submit"
+class="btn-primary">
+
+Save Exercise
+
+</button>
+
+</form>
+
+</div>
+
+{% endblock %}

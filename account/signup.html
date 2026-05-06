@@ -1,0 +1,456 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register - GymFit Pro</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        *, *::before, *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: radial-gradient(ellipse at top left, #1f0a0a, #0d0d0d 60%),
+                        radial-gradient(ellipse at bottom right, #1a0608, #0d0d0d);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+        }
+
+        /* ── CARD ── */
+        .auth-card {
+            width: 460px;
+            padding: 44px 40px;
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            border-radius: 24px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 24px 60px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(230, 57, 70, 0.08);
+            animation: fadeUp 0.5s ease both;
+        }
+
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(24px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        /* ── BRAND ── */
+        .auth-brand {
+            font-size: 30px;
+            font-weight: 700;
+            color: #e63946;
+            font-family: 'Bebas Neue', sans-serif;
+            letter-spacing: 1px;
+            margin-bottom: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .auth-brand i {
+            font-size: 24px;
+        }
+
+        .auth-title {
+            font-size: 20px;
+            font-weight: 700;
+            color: #fff;
+            margin-top: 16px;
+        }
+
+        .auth-sub {
+            color: #888;
+            font-size: 13px;
+            margin-top: 4px;
+            margin-bottom: 28px;
+        }
+
+        /* ── FORM GROUP ── */
+        .form-group {
+            text-align: left;
+            margin-bottom: 16px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 11px;
+            font-weight: 600;
+            color: #999;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            margin-bottom: 7px;
+        }
+
+        /* ── INPUT WRAPPER (for eye toggle) ── */
+        .input-wrap {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .input-wrap input {
+            width: 100%;
+            padding: 13px 44px 13px 14px; /* right padding for eye icon */
+            border-radius: 12px;
+            border: 1px solid #2a2a2a;
+            background: #111;
+            color: white;
+            font-family: 'Inter', sans-serif;
+            font-size: 14px;
+            outline: none;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        .input-wrap input:focus {
+            border-color: #e63946;
+            box-shadow: 0 0 0 3px rgba(230, 57, 70, 0.12);
+        }
+
+        /* Plain inputs (no eye button) */
+        .form-group input {
+            width: 100%;
+            padding: 13px 14px;
+            border-radius: 12px;
+            border: 1px solid #2a2a2a;
+            background: #111;
+            color: white;
+            font-family: 'Inter', sans-serif;
+            font-size: 14px;
+            outline: none;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        .form-group input:focus {
+            border-color: #e63946;
+            box-shadow: 0 0 0 3px rgba(230, 57, 70, 0.12);
+        }
+
+        /* ── EYE TOGGLE BUTTON ── */
+        .eye-btn {
+            position: absolute;
+            right: 14px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: #555;
+            font-size: 15px;
+            padding: 4px;
+            line-height: 1;
+            transition: color 0.2s;
+            display: flex;
+            align-items: center;
+        }
+
+        .eye-btn:hover {
+            color: #e63946;
+        }
+
+        /* ── ERROR LIST ── */
+        .errorlist {
+            list-style: none;
+            padding: 0;
+            margin: 6px 0 0;
+        }
+
+        .errorlist li {
+            font-size: 12px;
+            color: #ff4d6d;
+            background: rgba(255, 77, 109, 0.08);
+            border: 1px solid rgba(255, 77, 109, 0.2);
+            border-radius: 8px;
+            padding: 6px 10px;
+            margin-top: 4px;
+        }
+
+        /* ── HELP TEXT ── */
+        .helptext {
+            display: block;
+            font-size: 11px;
+            color: #555;
+            margin-top: 5px;
+            line-height: 1.5;
+        }
+
+        /* ── PASSWORD STRENGTH BAR ── */
+        .strength-bar {
+            display: flex;
+            gap: 4px;
+            margin-top: 8px;
+        }
+
+        .strength-bar span {
+            flex: 1;
+            height: 3px;
+            border-radius: 99px;
+            background: #222;
+            transition: background 0.3s;
+        }
+
+        .strength-label {
+            font-size: 11px;
+            color: #555;
+            margin-top: 5px;
+            min-height: 16px;
+        }
+
+        /* ── DIVIDER ── */
+        .divider {
+            border: none;
+            border-top: 1px solid rgba(255,255,255,0.06);
+            margin: 4px 0 18px;
+        }
+
+        /* ── SUBMIT BUTTON ── */
+        .btn-register {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(90deg, #e63946 0%, #ff4d6d 100%);
+            border: none;
+            border-radius: 12px;
+            color: white;
+            font-family: 'Inter', sans-serif;
+            font-size: 15px;
+            font-weight: 700;
+            letter-spacing: 0.02em;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s, opacity 0.2s;
+            margin-top: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            box-shadow: 0 4px 20px rgba(230, 57, 70, 0.35);
+        }
+
+        .btn-register:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 28px rgba(230, 57, 70, 0.45);
+        }
+
+        .btn-register:active {
+            transform: translateY(0);
+            opacity: 0.9;
+        }
+
+        /* ── FOOTER LINK ── */
+        .login-link {
+            margin-top: 20px;
+            font-size: 13px;
+            color: #666;
+            text-align: center;
+        }
+
+        .login-link a {
+            color: #e63946;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .login-link a:hover {
+            text-decoration: underline;
+        }
+
+        /* ── INPUT ICON PREFIX ── */
+        .input-wrap .prefix-icon {
+            position: absolute;
+            left: 14px;
+            color: #444;
+            font-size: 14px;
+            pointer-events: none;
+        }
+
+        .input-wrap input.has-icon {
+            padding-left: 38px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="auth-card">
+
+    <!-- Brand -->
+    <div class="auth-brand">
+        <i class="fas fa-dumbbell"></i> GymFit Pro
+    </div>
+
+    <h2 class="auth-title">Create Account</h2>
+    <p class="auth-sub">Start your fitness journey today</p>
+
+    <!-- Registration Form -->
+    <form method="POST" action="" id="registerForm">
+        {% csrf_token %}
+
+        <!-- EMAIL -->
+        <div class="form-group">
+            <label for="id_email"><i class="fas fa-envelope" style="margin-right:5px;color:#e63946"></i> Email Address</label>
+            <div class="input-wrap">
+                <input
+                    type="email"
+                    id="id_email"
+                    name="email"
+                    placeholder="you@example.com"
+                    required
+                    autocomplete="email"
+                    value="{{ form.email.value|default:'' }}"
+                >
+            </div>
+            {% if form.email.errors %}
+                <ul class="errorlist">
+                    {% for error in form.email.errors %}
+                        <li>{{ error }}</li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+        </div>
+
+        <!-- USERNAME -->
+        <div class="form-group">
+            <label for="id_username"><i class="fas fa-user" style="margin-right:5px;color:#e63946"></i> Username</label>
+            <div class="input-wrap">
+                <input
+                    type="text"
+                    id="id_username"
+                    name="username"
+                    placeholder="Choose a username"
+                    required
+                    autocomplete="username"
+                    value="{{ form.username.value|default:'' }}"
+                >
+            </div>
+            {% if form.username.errors %}
+                <ul class="errorlist">
+                    {% for error in form.username.errors %}
+                        <li>{{ error }}</li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+            <span class="helptext">Letters, digits and @/./+/-/_ only.</span>
+        </div>
+
+        <hr class="divider">
+
+        <!-- PASSWORD -->
+        <div class="form-group">
+            <label for="id_password1"><i class="fas fa-lock" style="margin-right:5px;color:#e63946"></i> Password</label>
+            <div class="input-wrap">
+                <input
+                    type="password"
+                    id="id_password1"
+                    name="password1"
+                    placeholder="Create a strong password"
+                    required
+                    autocomplete="new-password"
+                    oninput="checkStrength(this.value)"
+                >
+                <button type="button" class="eye-btn" onclick="toggleEye('id_password1', this)" aria-label="Toggle password visibility">
+                    <i class="fas fa-eye"></i>
+                </button>
+            </div>
+            <!-- Strength bar -->
+            <div class="strength-bar">
+                <span id="sb1"></span>
+                <span id="sb2"></span>
+                <span id="sb3"></span>
+                <span id="sb4"></span>
+            </div>
+            <div class="strength-label" id="strengthLabel"></div>
+            {% if form.password1.errors %}
+                <ul class="errorlist">
+                    {% for error in form.password1.errors %}
+                        <li>{{ error }}</li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+        </div>
+
+        <!-- CONFIRM PASSWORD -->
+        <div class="form-group">
+            <label for="id_password2"><i class="fas fa-lock" style="margin-right:5px;color:#e63946"></i> Confirm Password</label>
+            <div class="input-wrap">
+                <input
+                    type="password"
+                    id="id_password2"
+                    name="password2"
+                    placeholder="Repeat your password"
+                    required
+                    autocomplete="new-password"
+                >
+                <button type="button" class="eye-btn" onclick="toggleEye('id_password2', this)" aria-label="Toggle confirm password visibility">
+                    <i class="fas fa-eye"></i>
+                </button>
+            </div>
+            {% if form.password2.errors %}
+                <ul class="errorlist">
+                    {% for error in form.password2.errors %}
+                        <li>{{ error }}</li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+        </div>
+
+        <!-- SUBMIT -->
+        <button class="btn-register" type="submit">
+            <i class="fas fa-user-plus"></i> Create Account
+        </button>
+    </form>
+
+    <!-- Login Redirect -->
+    <div class="login-link">
+        Already have an account? <a href="{% url 'account_login' %}">Sign in</a>
+    </div>
+
+</div>
+
+<script>
+    /* ── Eye Toggle ── */
+    function toggleEye(inputId, btn) {
+        const input = document.getElementById(inputId);
+        const icon  = btn.querySelector('i');
+        if (input.type === 'password') {
+            input.type = 'text';
+            icon.classList.replace('fa-eye', 'fa-eye-slash');
+            btn.style.color = '#e63946';
+        } else {
+            input.type = 'password';
+            icon.classList.replace('fa-eye-slash', 'fa-eye');
+            btn.style.color = '';
+        }
+    }
+
+    /* ── Password Strength ── */
+    function checkStrength(pw) {
+        const bars   = [sb1, sb2, sb3, sb4];
+        const label  = document.getElementById('strengthLabel');
+        let score    = 0;
+
+        if (pw.length >= 8)                  score++;
+        if (/[A-Z]/.test(pw))               score++;
+        if (/[0-9]/.test(pw))               score++;
+        if (/[^A-Za-z0-9]/.test(pw))        score++;
+
+        const colors = ['#ff4d6d', '#ff8c42', '#ffd166', '#06d6a0'];
+        const labels = ['Weak', 'Fair', 'Good', 'Strong'];
+
+        bars.forEach((b, i) => {
+            b.style.background = i < score ? colors[score - 1] : '#222';
+        });
+
+        label.textContent  = pw.length ? labels[score - 1] || '' : '';
+        label.style.color  = score > 0 ? colors[score - 1] : '#555';
+    }
+</script>
+
+</body>
+</html>

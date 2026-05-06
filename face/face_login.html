@@ -1,0 +1,120 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Face Login - GymFit Pro{% endblock %}
+
+{% block full_content %}
+<div class="face-login-page">
+    <div class="face-login-card">
+        <div class="face-login-brand">
+            <i class="fas fa-dumbbell"></i>
+            <span>GymFit Pro</span>
+        </div>
+        <h2>Face Login</h2>
+        <p>Look at the camera to sign in</p>
+
+        <div class="camera-wrapper face-login-cam">
+            <video id="video" autoplay playsinline class="camera-feed"></video>
+            <canvas id="canvas" class="hidden"></canvas>
+            <div class="camera-overlay">
+                <div class="face-guide-login"></div>
+                <div class="scan-line-anim" id="scanAnim" style="display:none"></div>
+            </div>
+            <div class="camera-placeholder" id="cameraPlaceholder">
+                <i class="fas fa-camera-retro"></i>
+                <p>Click Start to begin</p>
+            </div>
+        </div>
+
+        <div id="statusMsg" class="status-message hidden"></div>
+
+        <div class="face-controls">
+            <button class="btn-face btn-start" id="startBtn" onclick="startCamera()">
+                <i class="fas fa-camera"></i> Start Camera
+            </button>
+            <button class="btn-face btn-capture hidden" id="scanBtn" onclick="scanFace()">
+                <i class="fas fa-search"></i> Scan Face
+            </button>
+            <button class="btn-face btn-auto hidden" id="autoBtn" onclick="toggleAuto()">
+                <i class="fas fa-sync"></i> Auto Scan
+            </button>
+        </div>
+
+        <div class="login-divider"><span>or</span></div>
+
+        <div class="login-alt">
+            <a href="{% url 'account_login' %}" class="btn-google-login">
+                <i class="fab fa-google"></i> Sign in with Google
+            </a>
+            <a href="{% url 'home' %}" class="btn-back">
+                <i class="fas fa-arrow-left"></i> Back to Home
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let stream = null, autoInterval = null, autoMode = false;
+
+async function startCamera() {
+    try {
+        stream = await navigator.mediaDevices.getUserMedia({ video: { width: 640, height: 480, facingMode: 'user' } });
+        document.getElementById('video').srcObject = stream;
+        document.getElementById('cameraPlaceholder').style.display = 'none';
+        document.getElementById('startBtn').classList.add('hidden');
+        document.getElementById('scanBtn').classList.remove('hidden');
+        document.getElementById('autoBtn').classList.remove('hidden');
+        document.getElementById('scanAnim').style.display = 'block';
+    } catch(err) {
+        showStatus('error', 'Camera error: ' + err.message);
+    }
+}
+
+async function scanFace() {
+    const video = document.getElementById('video');
+    const canvas = document.getElementById('canvas');
+    canvas.width = video.videoWidth; canvas.height = video.videoHeight;
+    canvas.getContext('2d').drawImage(video, 0, 0);
+    const imageData = canvas.toDataURL('image/jpeg', 0.8);
+
+    showStatus('info', 'Scanning...');
+
+    const res = await fetch('{% url "face_login_verify" %}', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ image: imageData })
+    });
+    const data = await res.json();
+
+    if (data.success) {
+        showStatus('success', `Welcome back, ${data.name}! Redirecting...`);
+        if (autoInterval) clearInterval(autoInterval);
+        setTimeout(() => window.location.href = data.redirect, 1500);
+    } else {
+        showStatus('error', data.error);
+    }
+}
+
+function toggleAuto() {
+    const btn = document.getElementById('autoBtn');
+    autoMode = !autoMode;
+    if (autoMode) {
+        btn.innerHTML = '<i class="fas fa-stop"></i> Stop Auto';
+        btn.classList.add('active');
+        autoInterval = setInterval(scanFace, 2500);
+    } else {
+        btn.innerHTML = '<i class="fas fa-sync"></i> Auto Scan';
+        btn.classList.remove('active');
+        clearInterval(autoInterval);
+    }
+}
+
+function showStatus(type, msg) {
+    const el = document.getElementById('statusMsg');
+    el.className = `status-message status-${type}`;
+    el.textContent = msg;
+    el.classList.remove('hidden');
+}
+</script>
+{% endblock %}

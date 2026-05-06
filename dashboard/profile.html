@@ -1,0 +1,72 @@
+{% extends 'base.html' %}
+{% block title %}My Profile - GymFit Pro{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-title">My Profile</h1>
+</div>
+
+<div class="profile-grid">
+    <div class="profile-card">
+        <div class="profile-avatar-section">
+            {% if user.profile.google_photo_url %}
+            <img src="{{ user.profile.google_photo_url }}" class="profile-photo" alt="Profile">
+            {% else %}
+            <div class="profile-avatar-large">{{ user.first_name.0|upper|default:user.username.0|upper }}</div>
+            {% endif %}
+            <h2>{{ user.get_full_name|default:user.username }}</h2>
+            <p class="profile-email">{{ user.email }}</p>
+            <span class="badge-status badge-{{ profile.membership_status }}">
+                {{ profile.get_membership_status_display }}
+            </span>
+        </div>
+        <div class="profile-meta">
+            <div class="meta-item">
+                <i class="fas fa-calendar"></i>
+                <span>Joined {{ profile.date_joined|date:"F Y" }}</span>
+            </div>
+            <div class="meta-item">
+                <i class="fas fa-camera {% if profile.face_registered %}text-success{% else %}text-warning{% endif %}"></i>
+                <span>Face ID: {% if profile.face_registered %}Registered{% else %}Not Registered{% endif %}</span>
+            </div>
+        </div>
+        {% if not profile.face_registered %}
+        <a href="{% url 'face_register' %}" class="btn-face btn-capture" style="display:block; text-align:center; margin-top:1rem;">
+            <i class="fas fa-camera"></i> Register Face ID
+        </a>
+        {% endif %}
+    </div>
+
+    <div class="dash-card">
+        <div class="dash-card-header">
+            <h3><i class="fas fa-edit"></i> Edit Profile</h3>
+        </div>
+        <form method="POST" class="profile-form">
+            {% csrf_token %}
+            <div class="form-group">
+                <label>First Name</label>
+                <input type="text" name="first_name" value="{{ user.first_name }}" class="form-control">
+            </div>
+            <div class="form-group">
+                <label>Last Name</label>
+                <input type="text" name="last_name" value="{{ user.last_name }}" class="form-control">
+            </div>
+            <div class="form-group">
+                <label>Email</label>
+                <input type="email" value="{{ user.email }}" class="form-control" disabled>
+            </div>
+            <div class="form-group">
+                <label>Phone</label>
+                <input type="text" name="phone" value="{{ profile.phone|default:'' }}" class="form-control" placeholder="+63 912 345 6789">
+            </div>
+            <div class="form-group">
+                <label>Address</label>
+                <textarea name="address" class="form-control" rows="3" placeholder="Your address">{{ profile.address|default:'' }}</textarea>
+            </div>
+            <button type="submit" class="btn-face btn-start" style="width:100%">
+                <i class="fas fa-save"></i> Save Changes
+            </button>
+        </form>
+    </div>
+</div>
+{% endblock %}

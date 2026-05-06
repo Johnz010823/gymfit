@@ -1,0 +1,106 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Edit Exercise{% endblock %}
+
+{% block extra_css %}
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;600;700&display=swap');
+
+  :root {
+    --bg: #0a0a0c; --card: #111114; --border: #1e1e24;
+    --accent: #c8ff00; --text: #eeeef0; --muted: #555560;
+    --red: #ff3b55; --green: #00e676;
+  }
+  body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; }
+
+  .form-wrap { max-width: 520px; margin: 3rem auto; padding: 0 1rem; }
+  .form-title { font-family: 'Bebas Neue', sans-serif; font-size: 1.8rem; letter-spacing: .5px; margin-bottom: .3rem; }
+  .form-title em { color: var(--accent); font-style: normal; }
+  .form-sub { color: var(--muted); font-size: .85rem; margin-bottom: 1.8rem; }
+
+  .form-card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 1.6rem; }
+
+  .field { margin-bottom: 1.2rem; }
+  .field label { display: block; font-size: .8rem; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; margin-bottom: .45rem; }
+  .field select,
+  .field input {
+    width: 100%; background: #0a0a0c; border: 1px solid var(--border);
+    color: var(--text); border-radius: 8px;
+    padding: .6rem .85rem; font-family: 'DM Sans', sans-serif; font-size: .9rem;
+    outline: none; transition: border-color .2s;
+  }
+  .field select:focus, .field input:focus { border-color: var(--accent); }
+  .field select option { background: #111114; }
+
+  .fields-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: .85rem; }
+
+  .btn-row { display: flex; gap: .6rem; margin-top: .4rem; }
+  .btn-save {
+    flex: 1; background: var(--accent); color: #0a0a0c;
+    border: none; padding: .7rem; border-radius: 9px;
+    font-family: 'DM Sans', sans-serif; font-weight: 700; font-size: .9rem;
+    cursor: pointer; transition: transform .15s, box-shadow .15s;
+  }
+  .btn-save:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(200,255,0,.25); }
+  .btn-cancel {
+    padding: .7rem 1.2rem; border-radius: 9px;
+    border: 1px solid var(--border); background: transparent;
+    color: var(--muted); font-family: 'DM Sans', sans-serif;
+    font-size: .9rem; cursor: pointer; text-decoration: none;
+    display: inline-flex; align-items: center; transition: all .15s;
+  }
+  .btn-cancel:hover { border-color: #2e2e38; color: var(--text); }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="form-wrap">
+  <div class="form-title">Edit <em>Exercise</em></div>
+  <div class="form-sub">Update details for <strong style="color:var(--text)">{{ exercise.name }}</strong></div>
+
+  <div class="form-card">
+    <form method="post">
+      {% csrf_token %}
+
+      <div class="field">
+        <label>Exercise Name</label>
+        <select name="name" required>
+          <option value="">— Select an exercise —</option>
+          {% for cat_name, cat_data in exercise_library.items %}
+            <optgroup label="{{ cat_data.icon }} {{ cat_name }}">
+              {% for subcat, ex_list in cat_data.subcategories.items %}
+                {% for ex_name in ex_list %}
+                  <option value="{{ ex_name }}" {% if ex_name == exercise.name %}selected{% endif %}>
+                    {{ ex_name }}
+                  </option>
+                {% endfor %}
+              {% endfor %}
+            </optgroup>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="fields-row">
+        <div class="field">
+          <label>Sets</label>
+          <input type="number" name="sets" value="{{ exercise.sets }}" min="1" max="20" required>
+        </div>
+        <div class="field">
+          <label>Reps</label>
+          <input type="number" name="reps" value="{{ exercise.reps }}" min="1" max="200" required>
+        </div>
+        <div class="field">
+          <label>Weight (kg)</label>
+          <input type="number" name="weight" value="{{ exercise.weight_kg|default_if_none:'' }}" min="0" step="0.5" placeholder="—">
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button type="submit" class="btn-save">Save Changes</button>
+        <a href="{% url 'workout_plan' %}" class="btn-cancel">Cancel</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

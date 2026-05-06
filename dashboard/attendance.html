@@ -1,0 +1,58 @@
+{% extends 'base.html' %}
+{% block title %}Attendance - GymFit Pro{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-title">My Attendance</h1>
+    <span class="page-subtitle">Your gym visit history</span>
+</div>
+
+<div class="stats-grid">
+    <div class="stat-card stat-blue">
+        <div class="stat-icon"><i class="fas fa-calendar"></i></div>
+        <div class="stat-info">
+            <span class="stat-value">{{ monthly_count }}</span>
+            <span class="stat-label">This Month</span>
+        </div>
+    </div>
+    <div class="stat-card stat-green">
+        <div class="stat-icon"><i class="fas fa-history"></i></div>
+        <div class="stat-info">
+            <span class="stat-value">{{ attendances.count }}</span>
+            <span class="stat-label">Total Sessions</span>
+        </div>
+    </div>
+</div>
+
+<div class="dash-card">
+    <div class="dash-card-header">
+        <h3><i class="fas fa-list"></i> Attendance Log</h3>
+    </div>
+    <div class="table-responsive">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Time In</th>
+                    <th>Time Out</th>
+                    <th>Duration</th>
+                    <th>Method</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for att in attendances %}
+                <tr>
+                    <td>{{ att.date|date:"F d, Y" }}</td>
+                    <td>{{ att.time_in|time:"h:i A" }}</td>
+                    <td>{% if att.time_out %}{{ att.time_out|time:"h:i A" }}{% else %}<span class="text-warning">—</span>{% endif %}</td>
+                    <td>{{ att.duration }}</td>
+                    <td><span class="badge-method">{{ att.get_login_method_display }}</span></td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="5" class="text-center py-4">No attendance records found.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

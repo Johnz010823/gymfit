@@ -1,0 +1,470 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Update Payment - GymFit Pro</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: radial-gradient(ellipse at top left, #1f0a0a, #0d0d0d 60%),
+                        radial-gradient(ellipse at bottom right, #1a0608, #0d0d0d);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            padding: 30px 16px;
+        }
+
+        .card {
+            width: 100%;
+            max-width: 560px;
+            background: rgba(255,255,255,0.05);
+            backdrop-filter: blur(20px);
+            border-radius: 24px;
+            border: 1px solid rgba(255,255,255,0.08);
+            box-shadow: 0 24px 60px rgba(0,0,0,0.7);
+            padding: 44px 40px;
+            animation: fadeUp 0.5s ease both;
+        }
+
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        /* ── HEADER ── */
+        .card-header {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            margin-bottom: 28px;
+        }
+
+        .header-icon {
+            width: 52px; height: 52px;
+            background: linear-gradient(135deg, rgba(230,57,70,0.2), rgba(255,77,109,0.08));
+            border: 1px solid rgba(230,57,70,0.3);
+            border-radius: 16px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 22px; color: #e63946; flex-shrink: 0;
+        }
+
+        .header-text h2 {
+            font-size: 20px; font-weight: 700; color: #fff;
+        }
+        .header-text p {
+            font-size: 13px; color: #777; margin-top: 2px;
+        }
+
+        /* ── MEMBER BADGE ── */
+        .member-badge {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.07);
+            border-radius: 14px;
+            padding: 14px 16px;
+            margin-bottom: 28px;
+        }
+
+        .avatar {
+            width: 44px; height: 44px;
+            background: linear-gradient(135deg, #e63946, #ff4d6d);
+            border-radius: 12px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 18px; font-weight: 700; color: white; flex-shrink: 0;
+        }
+
+        .member-info strong { display: block; font-size: 15px; color: #eee; }
+        .member-info span   { font-size: 12px; color: #666; }
+
+        /* ── PLAN SELECTOR ── */
+        .plan-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 22px;
+        }
+
+        .plan-option { display: none; }
+
+        .plan-label {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            padding: 16px 12px;
+            border-radius: 14px;
+            border: 1px solid #2a2a2a;
+            background: rgba(255,255,255,0.03);
+            cursor: pointer;
+            transition: border-color 0.2s, background 0.2s, transform 0.15s;
+            text-align: center;
+        }
+
+        .plan-label:hover {
+            border-color: rgba(230,57,70,0.4);
+            background: rgba(230,57,70,0.05);
+        }
+
+        .plan-option:checked + .plan-label {
+            border-color: #e63946;
+            background: rgba(230,57,70,0.1);
+            box-shadow: 0 0 0 2px rgba(230,57,70,0.15);
+        }
+
+        .plan-label .plan-name {
+            font-size: 13px; font-weight: 600; color: #ccc;
+        }
+
+        .plan-label .plan-price {
+            font-size: 20px; font-weight: 700; color: #e63946;
+        }
+
+        .plan-label .plan-sub {
+            font-size: 11px; color: #555;
+        }
+
+        /* ── PRICE SUMMARY ── */
+        .price-summary {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: rgba(230,57,70,0.07);
+            border: 1px solid rgba(230,57,70,0.2);
+            border-radius: 12px;
+            padding: 14px 18px;
+            margin-bottom: 22px;
+        }
+
+        .price-summary .label { font-size: 13px; color: #aaa; }
+        .price-summary .amount {
+            font-size: 22px; font-weight: 700; color: #e63946;
+            font-family: 'Bebas Neue', sans-serif; letter-spacing: 1px;
+        }
+
+        /* ── STATUS SELECTOR ── */
+        .status-grid {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 22px;
+        }
+
+        .status-opt { display: none; }
+
+        .status-lbl {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 7px;
+            padding: 11px;
+            border-radius: 12px;
+            border: 1px solid #2a2a2a;
+            background: rgba(255,255,255,0.03);
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+
+        .status-lbl:hover { border-color: #444; }
+
+        #s_paid:checked   ~ .status-grid .lbl-paid   { border-color: #06d6a0; background: rgba(6,214,160,0.1); color: #06d6a0; }
+        #s_pending:checked ~ .status-grid .lbl-pending { border-color: #ffd166; background: rgba(255,209,102,0.1); color: #ffd166; }
+        #s_expired:checked ~ .status-grid .lbl-expired  { border-color: #e63946; background: rgba(230,57,70,0.1);  color: #e63946; }
+
+        .lbl-paid    { color: #555; }
+        .lbl-pending { color: #555; }
+        .lbl-expired  { color: #555; }
+
+        /* ── FORM FIELDS ── */
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 14px;
+            margin-bottom: 22px;
+        }
+
+        .form-group { display: flex; flex-direction: column; gap: 7px; }
+
+        .form-group label {
+            font-size: 11px; font-weight: 600;
+            color: #888; text-transform: uppercase; letter-spacing: 0.06em;
+        }
+
+        .form-group input {
+            padding: 12px 14px;
+            border-radius: 12px;
+            border: 1px solid #2a2a2a;
+            background: rgba(255,255,255,0.04);
+            color: white;
+            font-family: 'Inter', sans-serif;
+            font-size: 14px;
+            outline: none;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        .form-group input:focus {
+            border-color: #e63946;
+            box-shadow: 0 0 0 3px rgba(230,57,70,0.1);
+        }
+
+        /* ── EXPIRY NOTE ── */
+        .expiry-note {
+            font-size: 11.5px;
+            color: #555;
+            margin-top: -14px;
+            margin-bottom: 22px;
+        }
+
+        .expiry-note span { color: #e63946; font-weight: 600; }
+
+        /* ── DIVIDER ── */
+        .divider {
+            border: none; border-top: 1px solid rgba(255,255,255,0.06);
+            margin: 8px 0 22px;
+        }
+
+        /* ── BUTTONS ── */
+        .btn-row { display: flex; gap: 12px; }
+
+        .btn-save {
+            flex: 1; padding: 14px;
+            background: linear-gradient(90deg, #e63946, #ff4d6d);
+            border: none; border-radius: 12px;
+            color: white; font-family: 'Inter', sans-serif;
+            font-size: 15px; font-weight: 700; cursor: pointer;
+            box-shadow: 0 4px 20px rgba(230,57,70,0.35);
+            transition: transform 0.2s, box-shadow 0.2s;
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+        }
+
+        .btn-save:hover  { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(230,57,70,0.45); }
+        .btn-save:active { transform: translateY(0); opacity: 0.9; }
+
+        .btn-cancel {
+            padding: 14px 20px;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 12px;
+            color: #888; font-family: 'Inter', sans-serif;
+            font-size: 15px; font-weight: 600; cursor: pointer;
+            text-decoration: none;
+            display: flex; align-items: center; gap: 7px;
+            transition: background 0.2s, color 0.2s;
+        }
+
+        .btn-cancel:hover { background: rgba(255,255,255,0.08); color: #ccc; }
+
+        /* ── SECTION LABEL ── */
+        .section-label {
+            font-size: 11px; font-weight: 700;
+            color: #555; text-transform: uppercase;
+            letter-spacing: 0.1em; margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="card">
+
+    <!-- Header -->
+    <div class="card-header">
+        <div class="header-icon"><i class="fas fa-credit-card"></i></div>
+        <div class="header-text">
+            <h2>Update Payment</h2>
+            <p>Set plan, amount, and membership dates</p>
+        </div>
+    </div>
+
+    <!-- Member Info -->
+    <div class="member-badge">
+        <div class="avatar">
+            {{ member.first_name.0|upper|default:member.username.0|upper }}
+        </div>
+        <div class="member-info">
+            <strong>{{ member.get_full_name|default:member.username }}</strong>
+            <span>{{ member.email }}</span>
+        </div>
+    </div>
+
+    <form method="POST">
+        {% csrf_token %}
+
+        <!-- ── PLAN SELECTION ── -->
+        <div class="section-label"><i class="fas fa-tag" style="margin-right:5px;color:#e63946"></i> Select Plan</div>
+        <div class="plan-grid">
+
+            <input class="plan-option" type="radio" name="plan" id="plan_daily"
+                   value="daily"
+                   data-price="60" data-days="1"
+                   {% if payment.plan == 'daily' %}checked{% endif %}>
+            <label class="plan-label" for="plan_daily">
+                <span class="plan-name">Daily</span>
+                <span class="plan-price">₱60</span>
+                <span class="plan-sub">1 day access</span>
+            </label>
+
+            <input class="plan-option" type="radio" name="plan" id="plan_monthly"
+                   value="monthly"
+                   data-price="500" data-days="30"
+                   {% if payment.plan == 'monthly' or not payment %}checked{% endif %}>
+            <label class="plan-label" for="plan_monthly">
+                <span class="plan-name">Monthly</span>
+                <span class="plan-price">₱500</span>
+                <span class="plan-sub">30 days access</span>
+            </label>
+
+            <input class="plan-option" type="radio" name="plan" id="plan_quarterly"
+                   value="quarterly"
+                   data-price="1400" data-days="90"
+                   {% if payment.plan == 'quarterly' %}checked{% endif %}>
+            <label class="plan-label" for="plan_quarterly">
+                <span class="plan-name">Quarterly</span>
+                <span class="plan-price">₱1,400</span>
+                <span class="plan-sub">90 days access</span>
+            </label>
+
+            <input class="plan-option" type="radio" name="plan" id="plan_annual"
+                   value="annual"
+                   data-price="5000" data-days="365"
+                   {% if payment.plan == 'annual' %}checked{% endif %}>
+            <label class="plan-label" for="plan_annual">
+                <span class="plan-name">Annual</span>
+                <span class="plan-price">₱5,000</span>
+                <span class="plan-sub">365 days access</span>
+            </label>
+
+        </div>
+
+        <!-- ── PRICE SUMMARY ── -->
+        <div class="price-summary">
+            <span class="label"><i class="fas fa-peso-sign" style="margin-right:6px"></i> Amount Due</span>
+            <span class="amount" id="priceDisplay">₱500</span>
+        </div>
+
+        <!-- ── STATUS ── -->
+        <div class="section-label"><i class="fas fa-circle-dot" style="margin-right:5px;color:#e63946"></i> Payment Status</div>
+        <div class="status-grid">
+            <input class="status-opt" type="radio" name="status" id="s_paid"
+                   value="paid" {% if payment.status == 'paid' or not payment %}checked{% endif %}>
+            <label class="status-lbl lbl-paid" for="s_paid">
+                <i class="fas fa-circle-check"></i> Paid
+            </label>
+
+            <input class="status-opt" type="radio" name="status" id="s_pending"
+                   value="pending" {% if payment.status == 'pending' %}checked{% endif %}>
+            <label class="status-lbl lbl-pending" for="s_pending">
+                <i class="fas fa-clock"></i> Pending
+            </label>
+
+            <input class="status-opt" type="radio" name="status" id="s_expired"
+                   value="expired" {% if payment.status == 'expired' %}checked{% endif %}>
+            <label class="status-lbl lbl-expired" for="s_expired">
+                <i class="fas fa-ban"></i> Expired
+            </label>
+        </div>
+
+        <hr class="divider">
+
+        <!-- ── DATES ── -->
+        <div class="section-label"><i class="fas fa-calendar" style="margin-right:5px;color:#e63946"></i> Dates</div>
+        <div class="form-row">
+            <div class="form-group">
+                <label for="payment_date">Payment Date</label>
+                <input type="date" id="payment_date" name="payment_date"
+                       value="{{ payment.payment_date|date:'Y-m-d'|default:today }}"
+                       required>
+            </div>
+            <div class="form-group">
+                <label for="expiry_date">Expiry Date</label>
+                <input type="date" id="expiry_date" name="expiry_date"
+                       value="{{ payment.expiry_date|date:'Y-m-d'|default:'' }}">
+            </div>
+        </div>
+        <p class="expiry-note">
+            <i class="fas fa-info-circle" style="margin-right:4px"></i>
+            Leave <span>Expiry Date</span> blank to auto-calculate from payment date + plan duration.
+        </p>
+
+        <hr class="divider">
+
+        <!-- ── ACTIONS ── -->
+        <div class="btn-row">
+            <a href="{% url 'owner_dashboard' %}" class="btn-cancel">
+                <i class="fas fa-arrow-left"></i> Cancel
+            </a>
+            <button type="submit" class="btn-save">
+                <i class="fas fa-floppy-disk"></i> Save Payment
+            </button>
+        </div>
+    </form>
+
+</div>
+
+<script>
+    // ── Plan prices & durations ──
+    const PRICES = { daily: 60, monthly: 500, quarterly: 1400, annual: 5000 };
+    const DAYS   = { daily: 1,  monthly: 30,  quarterly: 90,   annual: 365  };
+
+    const priceDisplay   = document.getElementById('priceDisplay');
+    const paymentDateEl  = document.getElementById('payment_date');
+    const expiryDateEl   = document.getElementById('expiry_date');
+
+    function getSelectedPlan() {
+        return document.querySelector('input[name="plan"]:checked')?.value || 'monthly';
+    }
+
+    function updatePrice() {
+        const plan = getSelectedPlan();
+        priceDisplay.textContent = '₱' + PRICES[plan].toLocaleString();
+    }
+
+    function autoExpiry() {
+        // Only auto-fill if expiry is blank
+        if (expiryDateEl.value) return;
+        const pd = paymentDateEl.value;
+        if (!pd) return;
+        const plan = getSelectedPlan();
+        const start = new Date(pd);
+        start.setDate(start.getDate() + DAYS[plan]);
+        // Format as YYYY-MM-DD
+        expiryDateEl.value = start.toISOString().split('T')[0];
+    }
+
+    // Listen for plan changes
+    document.querySelectorAll('input[name="plan"]').forEach(radio => {
+        radio.addEventListener('change', () => {
+            updatePrice();
+            // Clear expiry so it recalculates
+            expiryDateEl.value = '';
+            autoExpiry();
+        });
+    });
+
+    // Listen for payment date changes
+    paymentDateEl.addEventListener('change', () => {
+        expiryDateEl.value = '';
+        autoExpiry();
+    });
+
+    // Init on page load
+    updatePrice();
+    autoExpiry();
+</script>
+
+</body>
+</html>

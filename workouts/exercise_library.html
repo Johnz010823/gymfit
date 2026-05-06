@@ -1,0 +1,346 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Exercise Library — {{ day }}{% endblock %}
+
+{% block extra_css %}
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;600;700&display=swap');
+
+  :root {
+    --bg:      #0a0a0c;
+    --card:    #111114;
+    --border:  #1e1e24;
+    --accent:  #c8ff00;
+    --text:    #eeeef0;
+    --muted:   #555560;
+    --green:   #00e676;
+    --blue:    #2979ff;
+    --red:     #ff3b55;
+  }
+
+  * { box-sizing: border-box; }
+  body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; }
+
+  .lib-header {
+    background: linear-gradient(180deg, #141418 0%, var(--bg) 100%);
+    border-bottom: 1px solid var(--border);
+    padding: 1.4rem 0;
+    margin-bottom: 2rem;
+    position: sticky; top: 0; z-index: 100;
+    backdrop-filter: blur(12px);
+  }
+  .lib-title { font-family: 'Bebas Neue', sans-serif; font-size: 2rem; letter-spacing: 1px; }
+  .lib-title em { color: var(--accent); font-style: normal; }
+  .lib-sub  { color: var(--muted); font-size: .83rem; }
+  .lib-sub strong { color: var(--text); }
+
+  .back-link { color: var(--muted); text-decoration: none; font-size: .83rem; display: flex; align-items: center; gap: .3rem; }
+  .back-link:hover { color: var(--text); }
+
+  .search-wrap { position: relative; max-width: 380px; margin-bottom: 1.5rem; }
+  .search-input {
+    width: 100%; background: var(--card);
+    border: 1px solid var(--border);
+    color: var(--text); border-radius: 8px;
+    padding: .55rem .9rem .55rem 2.4rem;
+    font-family: 'DM Sans', sans-serif; font-size: .875rem;
+    outline: none; transition: border-color .2s;
+  }
+  .search-input:focus { border-color: var(--accent); }
+  .search-ico { position: absolute; left: .8rem; top: 50%; transform: translateY(-50%); color: var(--muted); font-size: .9rem; pointer-events: none; }
+
+  .cat-section { margin-bottom: 2rem; }
+  .cat-label {
+    display: flex; align-items: center; gap: .5rem;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.3rem; letter-spacing: .5px;
+    color: var(--accent);
+    margin-bottom: .8rem;
+    padding-bottom: .5rem;
+    border-bottom: 1px solid var(--border);
+  }
+  .subcat-label { font-size: .72rem; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: .6px; margin: .6rem 0 .4rem; }
+
+  .ex-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: .7rem .9rem;
+    display: flex; align-items: center; gap: .7rem;
+    cursor: pointer;
+    transition: border-color .15s, background .15s;
+    user-select: none;
+  }
+  .ex-card:hover { border-color: #2e2e38; background: #151518; }
+  .ex-card.selected { border-color: var(--accent); background: rgba(200,255,0,.05); }
+  .ex-card.already  { border-color: rgba(0,230,118,.3); background: rgba(0,230,118,.04); opacity: .65; cursor: default; }
+
+  .ex-cb {
+    width: 18px; height: 18px; flex-shrink: 0;
+    border: 2px solid var(--border); border-radius: 4px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: .65rem; transition: all .15s; color: transparent;
+  }
+  .ex-card.selected .ex-cb { background: var(--accent); border-color: var(--accent); color: #0a0a0c; }
+  .ex-card.already  .ex-cb { background: var(--green);  border-color: var(--green);  color: #0a0a0c; }
+
+  .ex-name { flex: 1; font-weight: 500; font-size: .875rem; }
+  .ex-tag  { font-size: .68rem; color: var(--green); font-weight: 600; white-space: nowrap; }
+
+  .add-bar {
+    position: fixed; bottom: 0; left: 0; right: 0;
+    background: #141418; border-top: 1px solid var(--border);
+    padding: .9rem 1.5rem;
+    display: flex; align-items: center; justify-content: space-between; gap: 1rem;
+    transform: translateY(100%);
+    transition: transform .25s cubic-bezier(.4,0,.2,1);
+    z-index: 200;
+  }
+  .add-bar.visible { transform: translateY(0); }
+  .add-bar-info { font-size: .875rem; }
+  .add-bar-info strong { color: var(--accent); }
+  .add-bar-info small  { color: var(--muted); font-size: .75rem; display: block; margin-top: 2px; }
+
+  .btn-add-sel {
+    background: var(--accent); color: #0a0a0c;
+    border: none; padding: .6rem 1.4rem;
+    border-radius: 8px; font-weight: 700; font-size: .875rem;
+    font-family: 'DM Sans', sans-serif;
+    cursor: pointer; white-space: nowrap;
+    transition: transform .15s, box-shadow .15s;
+  }
+  .btn-add-sel:hover { transform: translateY(-1px); box-shadow: 0 4px 16px rgba(200,255,0,.3); }
+  .btn-add-sel:disabled { opacity: .45; cursor: default; transform: none; box-shadow: none; }
+
+  .btn-clear {
+    background: none; border: 1px solid var(--border);
+    color: var(--muted); padding: .6rem 1rem;
+    border-radius: 8px; font-size: .83rem; font-family: 'DM Sans', sans-serif;
+    cursor: pointer; transition: all .15s;
+  }
+  .btn-clear:hover { border-color: var(--red); color: var(--red); }
+
+  .config-row { display: flex; gap: .5rem; align-items: center; }
+  .config-row label { font-size: .75rem; color: var(--muted); }
+  .config-row input {
+    width: 52px; background: #0a0a0c; border: 1px solid var(--border);
+    color: var(--text); border-radius: 5px; padding: .3rem .4rem;
+    font-size: .8rem; text-align: center; font-family: 'DM Sans', sans-serif;
+    outline: none;
+  }
+  .config-row input:focus { border-color: var(--accent); }
+
+  .pb-bar { padding-bottom: 5rem; }
+  .hidden { display: none !important; }
+
+  #toasts { position: fixed; bottom: 5rem; right: 1.5rem; z-index: 300; display: flex; flex-direction: column; gap: .4rem; }
+  .toast {
+    background: #18181e; border: 1px solid var(--border); color: var(--text);
+    padding: .6rem 1rem; border-radius: 9px; font-size: .82rem; font-weight: 500;
+    box-shadow: 0 4px 20px rgba(0,0,0,.6);
+    animation: tin .2s ease; max-width: 260px;
+  }
+  .toast.ok  { border-left: 3px solid var(--green); }
+  .toast.err { border-left: 3px solid var(--red); }
+  @keyframes tin { from { transform: translateX(40px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<div class="lib-header">
+  <div class="container">
+    <div class="d-flex align-items-start justify-content-between gap-2 flex-wrap">
+      <div>
+        <div class="lib-title">Exercise <em>Library</em></div>
+        <div class="lib-sub">Adding to <strong>{{ day }}</strong> — tap exercises to select</div>
+      </div>
+      <a href="{% url 'workout_plan' %}" class="back-link mt-1">← Back to Plan</a>
+    </div>
+  </div>
+</div>
+
+<div class="container pb-bar">
+
+  <div class="search-wrap">
+    <span class="search-ico">🔍</span>
+    <input type="text" class="search-input" id="searchBox"
+           placeholder="Search exercises…" oninput="filterExercises(this.value)">
+  </div>
+
+  {% for cat_name, cat_data in exercise_library.items %}
+    <div class="cat-section" data-cat="{{ cat_name }}">
+      <div class="cat-label">
+        <span>{{ cat_data.icon }}</span>
+        <span>{{ cat_name }}</span>
+      </div>
+
+      {% for subcat_name, ex_list in cat_data.subcategories.items %}
+        <div class="subcat-label">{{ subcat_name }}</div>
+        <div class="row g-2 mb-2">
+          {% for ex_name in ex_list %}
+            <div class="col-sm-6 col-md-4 ex-col" data-name="{{ ex_name|lower }}">
+              {% if ex_name in existing_exercises %}
+                <div class="ex-card already">
+                  <div class="ex-cb">✓</div>
+                  <div class="ex-name">{{ ex_name }}</div>
+                  <span class="ex-tag">In plan</span>
+                </div>
+              {% else %}
+                <div class="ex-card" onclick="toggleSelect(this, '{{ ex_name|escapejs }}')">
+                  <div class="ex-cb">✓</div>
+                  <div class="ex-name">{{ ex_name }}</div>
+                </div>
+              {% endif %}
+            </div>
+          {% endfor %}
+        </div>
+      {% endfor %}
+    </div>
+  {% endfor %}
+
+</div>
+
+<!-- Floating add bar -->
+<div class="add-bar" id="addBar">
+  <div class="add-bar-info">
+    <strong id="selCount">0</strong> selected
+    <small id="selNames"></small>
+  </div>
+  <div class="d-flex align-items-center gap-2 flex-wrap">
+    <div class="config-row">
+      <label>Sets</label>
+      <input type="number" id="cfgSets" value="3" min="1" max="20">
+      <label>Reps</label>
+      <input type="number" id="cfgReps" value="10" min="1" max="200">
+    </div>
+    <button class="btn-clear" onclick="clearAll()">Clear</button>
+    <button class="btn-add-sel" id="addBtn" onclick="addSelected()" disabled>
+      Add to {{ day }} →
+    </button>
+  </div>
+</div>
+
+<div id="toasts"></div>
+
+{# ── Inject Django-generated URL and CSRF so JS uses the correct path ── #}
+<script>
+  const CSRF    = '{{ csrf_token }}';
+  const ADD_URL = '{% url "add_from_library" day %}';   {# resolves to e.g. /workouts/library/Friday/add/ #}
+  const DAY     = '{{ day }}';
+</script>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let selected = new Set();
+
+function toggleSelect(card, name) {
+  if (selected.has(name)) {
+    selected.delete(name);
+    card.classList.remove('selected');
+  } else {
+    selected.add(name);
+    card.classList.add('selected');
+  }
+  updateBar();
+}
+
+function updateBar() {
+  const bar   = document.getElementById('addBar');
+  const count = document.getElementById('selCount');
+  const names = document.getElementById('selNames');
+  const btn   = document.getElementById('addBtn');
+
+  count.textContent = selected.size;
+  const arr = Array.from(selected);
+  names.textContent = arr.length <= 3
+    ? arr.join(', ')
+    : arr.slice(0, 3).join(', ') + ` +${arr.length - 3} more`;
+
+  btn.disabled = selected.size === 0;
+  bar.classList.toggle('visible', selected.size > 0);
+}
+
+function clearAll() {
+  selected.clear();
+  document.querySelectorAll('.ex-card.selected').forEach(c => c.classList.remove('selected'));
+  updateBar();
+}
+
+function addSelected() {
+  if (!selected.size) return;
+
+  const sets = parseInt(document.getElementById('cfgSets').value) || 3;
+  const reps = parseInt(document.getElementById('cfgReps').value) || 10;
+  const btn  = document.getElementById('addBtn');
+  btn.disabled    = true;
+  btn.textContent = 'Adding…';
+
+  fetch(ADD_URL, {
+    method:  'POST',
+    headers: { 'X-CSRFToken': CSRF, 'Content-Type': 'application/json' },
+    body:    JSON.stringify({
+      exercises:    Array.from(selected).map(name => ({ name, sets, reps })),
+      muscle_group: ''
+    })
+  })
+  .then(r => r.json())
+  .then(d => {
+    if (d.success) {
+      showToast('✅ ' + d.message, 'ok');
+
+      // Mark newly-added cards as "In plan" visually
+      d.added.forEach(name => {
+        document.querySelectorAll('.ex-card.selected').forEach(card => {
+          if (card.querySelector('.ex-name').textContent.trim() === name) {
+            card.classList.remove('selected');
+            card.classList.add('already');
+            card.onclick = null;
+            const tag = document.createElement('span');
+            tag.className   = 'ex-tag';
+            tag.textContent = 'In plan';
+            card.appendChild(tag);
+          }
+        });
+      });
+
+      selected.clear();
+      updateBar();
+      setTimeout(() => { window.location.href = '{% url "workout_plan" %}'; }, 1200);
+    } else {
+      showToast('❌ ' + (d.error || 'Something went wrong'), 'err');
+      btn.disabled    = false;
+      btn.textContent = `Add to ${DAY} →`;
+    }
+  })
+  .catch(err => {
+    console.error('Add error:', err);
+    showToast('❌ Network error — see console', 'err');
+    btn.disabled    = false;
+    btn.textContent = `Add to ${DAY} →`;
+  });
+}
+
+function filterExercises(query) {
+  const q = query.toLowerCase().trim();
+  document.querySelectorAll('.ex-col').forEach(col => {
+    col.classList.toggle('hidden', q !== '' && !col.dataset.name.includes(q));
+  });
+  document.querySelectorAll('.cat-section').forEach(sec => {
+    const hasVisible = sec.querySelectorAll('.ex-col:not(.hidden)').length > 0;
+    sec.classList.toggle('hidden', !hasVisible);
+  });
+}
+
+function showToast(msg, type) {
+  const c = document.getElementById('toasts');
+  const t = document.createElement('div');
+  t.className   = `toast ${type}`;
+  t.textContent = msg;
+  c.appendChild(t);
+  setTimeout(() => t.remove(), 3500);
+}
+</script>
+{% endblock %}
