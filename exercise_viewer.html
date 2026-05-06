@@ -1,0 +1,416 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Exercise Library – {{ day }}{% endblock %}
+
+{% block extra_css %}
+<style>
+  :root {
+    --bg:      #0d0d0f;
+    --card:    #16181c;
+    --border:  #2a2d35;
+    --accent:  #e8ff47;
+    --text:    #e8eaf0;
+    --muted:   #6b7280;
+    --red:     #ff4757;
+    --green:   #2ed573;
+    --blue:    #1e90ff;
+  }
+
+  body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', system-ui, sans-serif; }
+
+  /* ── Header ── */
+  .lib-header {
+    background: linear-gradient(135deg,#1a1d23 0%,#0d0d0f 100%);
+    border-bottom: 1px solid var(--border);
+    padding: 1.4rem 0 1.1rem;
+    position: sticky; top: 0; z-index: 100;
+  }
+  .lib-header h1 { font-size: 1.5rem; font-weight: 800; margin: 0; }
+  .lib-header h1 span { color: var(--accent); }
+  .day-pill {
+    background: var(--accent); color: #0d0d0f;
+    font-size: .75rem; font-weight: 800; padding: 3px 10px;
+    border-radius: 20px; letter-spacing: .3px;
+  }
+
+  /* ── Search ── */
+  .search-wrap { position: relative; }
+  .search-wrap input {
+    width: 100%; background: var(--card); border: 1px solid var(--border);
+    color: var(--text); border-radius: 10px; padding: .6rem 1rem .6rem 2.4rem;
+    font-size: .9rem; outline: none; transition: border-color .2s;
+  }
+  .search-wrap input:focus { border-color: var(--accent); }
+  .search-wrap .search-icon {
+    position: absolute; left: .8rem; top: 50%; transform: translateY(-50%);
+    color: var(--muted); pointer-events: none;
+  }
+
+  /* ── Category Tabs ── */
+  .cat-tabs { display: flex; gap: .4rem; overflow-x: auto; padding-bottom: .25rem; scrollbar-width: none; }
+  .cat-tabs::-webkit-scrollbar { display: none; }
+  .cat-tab {
+    flex-shrink: 0; background: var(--card); border: 1px solid var(--border);
+    color: var(--muted); padding: .4rem 1rem; border-radius: 20px;
+    font-size: .82rem; font-weight: 600; cursor: pointer;
+    transition: all .15s; white-space: nowrap;
+  }
+  .cat-tab:hover  { border-color: #3a3d45; color: var(--text); }
+  .cat-tab.active { background: var(--accent); border-color: var(--accent); color: #0d0d0f; }
+
+  /* ── Category Section ── */
+  .cat-section { margin-bottom: 1.5rem; }
+  .cat-section.hidden { display: none !important; }
+
+  .cat-heading {
+    font-size: .8rem; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 1px; color: var(--muted); margin-bottom: .75rem;
+    display: flex; align-items: center; gap: .5rem;
+  }
+  .cat-heading .cat-icon { font-size: 1.1rem; }
+
+  .subcat-heading {
+    font-size: .73rem; font-weight: 600; text-transform: uppercase;
+    letter-spacing: .8px; color: var(--blue); margin: .75rem 0 .4rem;
+    padding-left: .1rem;
+  }
+
+  /* ── Exercise Pill ── */
+  .ex-grid { display: flex; flex-wrap: wrap; gap: .5rem; }
+  .ex-pill {
+    display: flex; align-items: center; gap: .4rem;
+    background: var(--card); border: 1.5px solid var(--border);
+    border-radius: 8px; padding: .45rem .9rem;
+    font-size: .855rem; font-weight: 500; cursor: pointer;
+    transition: all .15s; user-select: none;
+  }
+  .ex-pill:hover  { border-color: #3a3d45; background: #1e2128; }
+  .ex-pill.selected {
+    background: rgba(232,255,71,.12);
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+  .ex-pill.existing {
+    background: rgba(46,213,115,.08);
+    border-color: var(--green);
+    color: var(--green);
+    cursor: default;
+  }
+  .ex-pill .pill-check {
+    width: 16px; height: 16px; border: 2px solid currentColor;
+    border-radius: 4px; display: flex; align-items: center;
+    justify-content: center; font-size: .7rem; flex-shrink: 0;
+    transition: background .15s;
+  }
+  .ex-pill.selected .pill-check { background: var(--accent); border-color: var(--accent); color: #0d0d0f; }
+  .ex-pill.existing .pill-check { background: var(--green); border-color: var(--green); color: #0d0d0f; }
+
+  /* ── Floating action bar ── */
+  #action-bar {
+    position: fixed; bottom: 0; left: 0; right: 0;
+    background: rgba(22,24,28,.96);
+    backdrop-filter: blur(12px);
+    border-top: 1px solid var(--border);
+    padding: 1rem 1.5rem;
+    z-index: 200;
+    transform: translateY(100%);
+    transition: transform .3s cubic-bezier(.4,0,.2,1);
+  }
+  #action-bar.visible { transform: translateY(0); }
+
+  .action-bar-inner { max-width: 900px; margin: 0 auto; display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; }
+  .selected-count { font-weight: 700; font-size: .95rem; }
+  .selected-count span { color: var(--accent); font-size: 1.2rem; }
+
+  .params-row { display: flex; gap: .5rem; align-items: center; flex-wrap: wrap; margin-left: auto; }
+  .param-group { display: flex; align-items: center; gap: .35rem; }
+  .param-group label { font-size: .78rem; color: var(--muted); font-weight: 600; }
+  .param-group input {
+    width: 58px; background: var(--card); border: 1px solid var(--border);
+    color: var(--text); border-radius: 6px; padding: .3rem .5rem;
+    font-size: .85rem; text-align: center;
+  }
+
+  .btn-add-all {
+    background: var(--accent); color: #0d0d0f;
+    border: none; font-weight: 800; padding: .55rem 1.6rem;
+    border-radius: 8px; cursor: pointer; font-size: .9rem;
+    transition: all .2s; white-space: nowrap;
+  }
+  .btn-add-all:hover { background: #d4eb3a; transform: translateY(-1px); }
+  .btn-add-all:disabled { opacity: .5; cursor: not-allowed; transform: none; }
+
+  /* ── Back / Cancel ── */
+  .btn-back {
+    background: none; border: 1px solid var(--border); color: var(--muted);
+    padding: .4rem .9rem; border-radius: 8px; font-size: .85rem;
+    text-decoration: none; cursor: pointer; transition: all .15s;
+    display: inline-flex; align-items: center; gap: .3rem;
+  }
+  .btn-back:hover { color: var(--text); border-color: #3a3d45; }
+
+  /* ── Toast ── */
+  #toast-container { position: fixed; bottom: 5rem; right: 1.5rem; z-index: 9999; display: flex; flex-direction: column; gap: .5rem; }
+  .toast-msg {
+    background: #1e2128; border: 1px solid var(--border); color: var(--text);
+    padding: .7rem 1.1rem; border-radius: 10px; font-size: .875rem; font-weight: 500;
+    box-shadow: 0 4px 20px rgba(0,0,0,.5); max-width: 280px;
+    animation: slideIn .25s ease;
+  }
+  .toast-msg.success { border-left: 3px solid var(--green); }
+  .toast-msg.error   { border-left: 3px solid var(--red); }
+  @keyframes slideIn { from { transform: translateX(60px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+
+  /* Extra bottom padding for floating bar */
+  .content-wrap { padding-bottom: 6rem; }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- ── Sticky Header ── -->
+<div class="lib-header">
+  <div class="container">
+    <div class="d-flex align-items-center gap-2 mb-2">
+      <a href="{% url 'workout_plan' %}" class="btn-back">← Back</a>
+      <h1>Exercise <span>Library</span></h1>
+      <span class="day-pill">{{ day }}</span>
+    </div>
+
+    <!-- Search -->
+    <div class="search-wrap mb-2" style="max-width:420px;">
+      <span class="search-icon">🔍</span>
+      <input type="text" id="ex-search" placeholder="Search exercises…" autocomplete="off">
+    </div>
+
+    <!-- Category Tabs -->
+    <div class="cat-tabs" id="cat-tabs">
+      <button class="cat-tab active" data-cat="all">All</button>
+      {% for cat_name, cat_data in exercise_library.items %}
+        <button class="cat-tab" data-cat="{{ cat_name }}">{{ cat_data.icon }} {{ cat_name }}</button>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+
+<!-- ── Main Content ── -->
+<div class="container content-wrap pt-3">
+
+  {% for cat_name, cat_data in exercise_library.items %}
+  <div class="cat-section" data-category="{{ cat_name }}" id="cat-{{ cat_name|slugify }}">
+
+    <div class="cat-heading">
+      <span class="cat-icon">{{ cat_data.icon }}</span>
+      {{ cat_name }}
+    </div>
+
+    {% for subcat_name, exercises in cat_data.subcategories.items %}
+    <div class="subcat-heading">{{ subcat_name }}</div>
+    <div class="ex-grid" data-subcat="{{ subcat_name }}">
+      {% for ex_name in exercises %}
+        {% if ex_name in existing_exercises %}
+          <!-- Already in the plan -->
+          <div class="ex-pill existing" title="Already in your {{ day }} plan">
+            <div class="pill-check">✓</div>
+            {{ ex_name }}
+          </div>
+        {% else %}
+          <div class="ex-pill"
+               data-name="{{ ex_name }}"
+               data-cat="{{ cat_name }}"
+               onclick="togglePill(this)">
+            <div class="pill-check"></div>
+            {{ ex_name }}
+          </div>
+        {% endif %}
+      {% endfor %}
+    </div>
+    {% endfor %}
+
+  </div>
+  {% endfor %}
+
+</div><!-- /.container -->
+
+<!-- ── Floating Action Bar ── -->
+<div id="action-bar">
+  <div class="action-bar-inner">
+    <div class="selected-count">
+      <span id="sel-count">0</span> selected
+    </div>
+    <div class="params-row">
+      <div class="param-group">
+        <label for="def-sets">Sets</label>
+        <input type="number" id="def-sets" value="3" min="1" max="10">
+      </div>
+      <div class="param-group">
+        <label for="def-reps">Reps</label>
+        <input type="number" id="def-reps" value="10" min="1" max="100">
+      </div>
+      <div class="param-group">
+        <label for="def-weight">kg</label>
+        <input type="number" id="def-weight" placeholder="opt." min="0" step="0.5">
+      </div>
+      <button class="btn-add-all" id="btn-add" onclick="addSelected()">
+        ➕ Add to {{ day }}
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div id="toast-container"></div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const DAY          = '{{ day }}';
+const CSRF         = '{{ csrf_token }}';
+{% if day %}
+  <a href="{% url 'add_from_library' day %}">Add to plan</a>
+{% endif %}
+{% if day %}
+  <a href="{% url 'add_from_library' day %}">＋ Add to {{ day }}</a>
+{% else %}
+  <span style="color:var(--muted);font-size:.75rem;">Open from a day to add</span>
+{% endif %}
+let selectedPills  = new Set();
+
+// ── Toggle a pill ──────────────────────────────────────────────────────────
+function togglePill(el) {
+  const name = el.dataset.name;
+  if (selectedPills.has(name)) {
+    selectedPills.delete(name);
+    el.classList.remove('selected');
+    el.querySelector('.pill-check').textContent = '';
+  } else {
+    selectedPills.add(name);
+    el.classList.add('selected');
+    el.querySelector('.pill-check').textContent = '✓';
+  }
+  updateBar();
+}
+
+// ── Update floating bar ────────────────────────────────────────────────────
+function updateBar() {
+  const bar = document.getElementById('action-bar');
+  document.getElementById('sel-count').textContent = selectedPills.size;
+  if (selectedPills.size > 0) {
+    bar.classList.add('visible');
+  } else {
+    bar.classList.remove('visible');
+  }
+}
+
+// ── Send selected to server ────────────────────────────────────────────────
+function addSelected() {
+  if (selectedPills.size === 0) return;
+
+  const sets   = parseInt(document.getElementById('def-sets').value)   || 3;
+  const reps   = parseInt(document.getElementById('def-reps').value)   || 10;
+  const weight = document.getElementById('def-weight').value.trim()    || '';
+
+  // Infer the primary muscle group from the first selected exercise's category pill
+  const firstSelEl    = document.querySelector('.ex-pill.selected');
+  const muscleGroup   = firstSelEl ? firstSelEl.dataset.cat : DAY;
+
+  const exercises = Array.from(selectedPills).map(name => ({
+    name, sets, reps, weight
+  }));
+
+  const btn = document.getElementById('btn-add');
+  btn.disabled    = true;
+  btn.textContent = 'Adding…';
+
+  fetch(ADD_URL, {
+    method:  'POST',
+    headers: { 'X-CSRFToken': CSRF, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ exercises, muscle_group: muscleGroup })
+  })
+  .then(r => r.json())
+  .then(data => {
+    if (data.success) {
+      showToast(`✅ ${data.message}`, 'success');
+      // Mark added pills as existing
+      data.added.forEach(name => {
+        document.querySelectorAll(`.ex-pill[data-name="${CSS.escape(name)}"]`).forEach(el => {
+          el.classList.remove('selected');
+          el.classList.add('existing');
+          el.querySelector('.pill-check').textContent = '✓';
+          el.onclick = null;
+          el.title = `Already in your ${DAY} plan`;
+          selectedPills.delete(name);
+        });
+      });
+      updateBar();
+      // Redirect after brief delay
+      setTimeout(() => { window.location.href = '{% url "workout_plan" %}'; }, 1500);
+    } else {
+      showToast(`❌ ${data.error}`, 'error');
+    }
+  })
+  .catch(() => showToast('Network error. Please try again.', 'error'))
+  .finally(() => {
+    btn.disabled    = false;
+    btn.textContent = `➕ Add to ${DAY}`;
+  });
+}
+
+// ── Category Tab Filter ────────────────────────────────────────────────────
+document.querySelectorAll('.cat-tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.cat-tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    const cat = tab.dataset.cat;
+    document.querySelectorAll('.cat-section').forEach(sec => {
+      if (cat === 'all' || sec.dataset.category === cat) {
+        sec.classList.remove('hidden');
+      } else {
+        sec.classList.add('hidden');
+      }
+    });
+  });
+});
+
+// ── Search Filter ──────────────────────────────────────────────────────────
+document.getElementById('ex-search').addEventListener('input', function () {
+  const query = this.value.toLowerCase().trim();
+
+  // Reset tabs to "all" when searching
+  if (query) {
+    document.querySelectorAll('.cat-tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.cat-section').forEach(sec => sec.classList.remove('hidden'));
+  }
+
+  document.querySelectorAll('.ex-pill').forEach(pill => {
+    const name = (pill.dataset.name || pill.textContent).toLowerCase();
+    pill.style.display = (!query || name.includes(query)) ? '' : 'none';
+  });
+
+  // Hide empty subcat labels and sections
+  document.querySelectorAll('.cat-section').forEach(sec => {
+    const visible = Array.from(sec.querySelectorAll('.ex-pill')).some(p => p.style.display !== 'none');
+    sec.classList.toggle('hidden', !visible);
+  });
+});
+
+// ── Toast ──────────────────────────────────────────────────────────────────
+function showToast(msg, type = '') {
+  const c   = document.getElementById('toast-container');
+  const div = document.createElement('div');
+  div.className   = `toast-msg ${type}`;
+  div.textContent = msg;
+  c.appendChild(div);
+  setTimeout(() => div.remove(), 3500);
+}
+
+// ── Keyboard shortcut: Enter to add ───────────────────────────────────────
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && selectedPills.size > 0 && document.activeElement.tagName !== 'INPUT') {
+    addSelected();
+  }
+});
+</script>
+{% endblock %}

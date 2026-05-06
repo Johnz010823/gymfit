@@ -1,0 +1,143 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block full_content %}
+
+<style>
+.hero-slides {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+}
+.hero-slides .slide {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center;
+  opacity: 0;
+  transition: opacity 1.2s ease;
+}
+.hero-slides .slide.active {
+  opacity: 1;
+}
+.hero-slides .slide::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, rgba(0,0,0,0.75) 0%, rgba(0,0,0,0.15) 100%);
+}
+.slide-1 { background-image: url("{% static 'images/gym-equipment.jpg' %}"); }
+.slide-2 { background-image: url("{% static 'images/gym-neon.jpg' %}"); }
+.slide-3 { background-image: url("{% static 'images/gym-sunset.jpg' %}"); }
+
+.slide-dots {
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 3;
+  display: flex;
+  gap: 8px;
+}
+.slide-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.35);
+  cursor: pointer;
+  transition: all 0.3s;
+}
+.slide-dot.active {
+  width: 20px;
+  border-radius: 4px;
+  background: #E8590C;
+}
+</style>
+
+<div class="landing-page">
+    <div class="landing-hero">
+
+        <!-- SLIDESHOW REPLACES hero-bg -->
+        <div class="hero-slides">
+            <div class="slide slide-1 active"></div>
+            <div class="slide slide-2"></div>
+            <div class="slide slide-3"></div>
+        </div>
+
+        <nav class="landing-nav">
+            <div class="nav-brand"><i class="fas fa-dumbbell"></i> GymFit Pro</div>
+            <div class="nav-links">
+                <a href="{% url 'face_login' %}"><i class="fas fa-camera"></i> Face Login</a>
+                <a href="{% url 'account_login' %}" class="btn-nav-login">Login</a>
+            </div>
+        </nav>
+
+        <div class="hero-content">
+            <div class="hero-text">
+                <div class="hero-badge"><i class="fas fa-bolt"></i> AI-Powered Gym Management</div>
+                <h1 class="hero-title">TRAIN SMARTER.<br><span>TRACK EVERYTHING.</span></h1>
+                <p class="hero-desc">Advanced facial recognition check-in, personalized workout tracking, and real-time progress monitoring — all in one powerful platform.</p>
+                <div class="hero-cta">
+                    <a href="{% url 'account_login' %}" class="btn-primary-hero">
+                        <i class="fab fa-google"></i> Sign In with Google
+                    </a>
+                    <a href="{% url 'face_login' %}" class="btn-secondary-hero">
+                        <i class="fas fa-camera-retro"></i> Face Login
+                    </a>
+                </div>
+                <div class="hero-stats">
+                    <div class="stat"><span class="stat-num">98%</span><span class="stat-label">Accuracy</span></div>
+                    <div class="stat"><span class="stat-num">24/7</span><span class="stat-label">Tracking</span></div>
+                </div>
+            </div>
+            <div class="hero-visual">
+                <div class="phone-mockup">
+                    <div class="phone-screen">
+                        <div class="face-scan-animation">
+                            <div class="scan-circle"></div>
+                            <div class="scan-line"></div>
+                            <i class="fas fa-user scan-icon"></i>
+                        </div>
+                        <p class="scan-text">Face Recognition Active</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SLIDE DOTS -->
+        <div class="slide-dots">
+            <span class="slide-dot active" data-slide="0"></span>
+            <span class="slide-dot" data-slide="1"></span>
+            <span class="slide-dot" data-slide="2"></span>
+        </div>
+
+    </div>
+
+    <footer class="landing-footer">
+        <p>GymFit Pro by John Paolo Silvano &copy; 2026 &mdash; Built with Django &amp; Face Recognition AI</p>
+    </footer>
+</div>
+
+<script>
+let cur = 0;
+const slides = document.querySelectorAll('.hero-slides .slide');
+const dots = document.querySelectorAll('.slide-dots .slide-dot');
+
+function goTo(n) {
+  slides[cur].classList.remove('active');
+  dots[cur].classList.remove('active');
+  cur = n;
+  slides[cur].classList.add('active');
+  dots[cur].classList.add('active');
+}
+
+let timer = setInterval(() => goTo((cur + 1) % slides.length), 5000);
+
+dots.forEach(d => d.addEventListener('click', () => {
+  clearInterval(timer);
+  goTo(parseInt(d.dataset.slide));
+  timer = setInterval(() => goTo((cur + 1) % slides.length), 5000);
+}));
+</script>
+
+{% endblock %}
